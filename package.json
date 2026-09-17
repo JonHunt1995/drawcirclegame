@@ -1,0 +1,15 @@
+{
+  "name": "drawcirclegame",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild client/script.ts --bundle --outfile=client/dist/script.js",
+    "dev": "pnpm --dir server dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "prettier": "^3.9.7"
+  }
+}

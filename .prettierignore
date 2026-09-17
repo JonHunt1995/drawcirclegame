@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+.wrangler
+**/.wrangler
+dist
+**/dist
+pnpm-lock.yaml
+**/pnpm-lock.yaml
+server/worker-configuration.d.ts

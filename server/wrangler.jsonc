@@ -5,8 +5,20 @@
   "compatibility_date": "2026-09-08",
   "assets": {
     "directory": "../client",
-    "binding": "ASSETS"
-  }
+    "binding": "ASSETS",
+  },
+  "build": {
+    "command": "pnpm esbuild ../client/script.ts --bundle --outfile=../client/dist/script.js",
+    "watch_dir": ["../client/script.ts", "../shared"],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "drawcircle-db",
+      "database_id": "local-drawcircle-db",
+      "migrations_dir": "migrations",
+    },
+  ],
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
