@@ -119,7 +119,7 @@ canvas.addEventListener('pointerup', () => {
   const isCompleteEnough = degrees >= 330 || (degrees >= 280 && startEndDist < fit.r * 0.35);
 
   if (!isCompleteEnough) {
-    hud.textContent = `Incomplete (${Math.round(degrees)}°). Close the circle!`;
+    hud.textContent = `Incomplete circle at (${Math.round(degrees)}°). Try again!`;
     return;
   }
 

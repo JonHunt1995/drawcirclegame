@@ -9,11 +9,6 @@ export type ReferenceCircle = {
   r: number;
 };
 
-export type Feedback = {
-  title: string;
-  feedback: string;
-};
-
 export type CircleEvaluation = {
   score: number;
   aspect: number;
@@ -22,6 +17,12 @@ export type CircleEvaluation = {
   title: string;
   feedback: string;
 };
+
+export type CircleStats = {
+  points: Point[];
+  ref: ReferenceCircle;
+
+}
 
 export function fitCircle(pts: Point[]): ReferenceCircle | null {
   const n = pts.length;
@@ -106,7 +107,7 @@ export function trimStrokeTo360(
   pts: Point[],
   cx: number,
   cy: number
-): { trimmed: Point[]; reached360: boolean } {
+): { trimmed: Point[]; angle: number } {
   let total = 0;
   let prevAngle = Math.atan2(pts[0].y - cy, pts[0].x - cx);
   const trimmed: Point[] = [pts[0]];
@@ -130,7 +131,7 @@ export function trimStrokeTo360(
       const interpY = pts[i - 1].y + t * (pts[i].y - pts[i - 1].y);
       trimmed.push({ x: interpX, y: interpY });
 
-      return { trimmed, reached360: true };
+      return { trimmed, currAngle };
     }
 
     total = nextTotal;
@@ -139,35 +140,6 @@ export function trimStrokeTo360(
   }
 
   return { trimmed, reached360: false };
-}
-
-export function getFeedback(score: number): Feedback {
-  if (score >= 90) {
-    return {
-      title: 'Nearly Flawless!',
-      feedback: 'Outstanding symmetry and flow',
-    };
-  } else if (score >= 80) {
-    return {
-      title: 'Great Circle!',
-      feedback: 'Very round and smooth',
-    };
-  } else if (score >= 65) {
-    return {
-      title: 'Good Attempt',
-      feedback: 'A few wobbles along the rim',
-    };
-  } else if (score >= 40) {
-    return {
-      title: 'Distorted',
-      feedback: 'Uneven radius or oval shape',
-    };
-  } else {
-    return {
-      title: 'Not a Circle',
-      feedback: 'Sharp corners or flat edges',
-    };
-  }
 }
 
 export function evaluateCircle(pts: Point[], fit: ReferenceCircle): CircleEvaluation {
