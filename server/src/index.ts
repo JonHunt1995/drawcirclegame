@@ -93,6 +93,7 @@ app.get('/game/:id', async (c) => {
       playerName: game.player_name,
       score: game.score,
       svgPath,
+      refCircle: new ReferenceCircle(game.reference_cx, game.reference_cy, game.reference_radius),
     })
   );
 });
