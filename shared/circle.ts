@@ -3,39 +3,105 @@ export type Point = {
   y: number;
 };
 
-export type ReferenceCircle = {
-  cx: number;
-  cy: number;
-  r: number;
-};
+export class ReferenceCircle {
+  constructor(
+    public cx: number,
+    public cy: number,
+    public r: number
+  ) {}
+
+  static fromPoints(points: Point[]): ReferenceCircle | null {
+    const center = getCenter(points);
+    if (!center) return null;
+
+    const sumDistSq = points.reduce(
+      (acc, p) => acc + (p.x - center.x) ** 2 + (p.y - center.y) ** 2,
+      0
+    );
+    const r = Math.sqrt(sumDistSq / points.length);
+
+    return new ReferenceCircle(center.x, center.y, r);
+  }
+}
 
 export type CircleEvaluation = {
   score: number;
   aspect: number;
   cvR: number;
   iso: number;
-  title: string;
-  feedback: string;
 };
 
 export type CircleStats = {
   points: Point[];
   ref: ReferenceCircle;
+  angle: number;
+  area: number;
+  perimeter: number;
+  rad_std_dev: number;
+  rad_cv: number;
+};
 
-}
+export const getCircleStatsFromPoints = (
+  points: Point[],
+  ref: ReferenceCircle
+): CircleStats | null => {
+  if (points.length < 3) return null;
 
-export function fitCircle(pts: Point[]): ReferenceCircle | null {
-  const n = pts.length;
-  if (n < 3) return null;
+  let stats: CircleStats = {
+    points: [points[0]],
+    ref: ref,
+    angle: 0,
+    area: 0,
+    perimeter: 0,
+    rad_std_dev: 0,
+    rad_cv: 0,
+  };
 
-  let sumX = 0;
-  let sumY = 0;
-  for (let i = 0; i < n; i++) {
-    sumX += pts[i].x;
-    sumY += pts[i].y;
+  let prevAngle = Math.atan2(points[0].y - ref.cy, points[0].x - ref.cx);
+  let varSum = (Math.hypot(points[0].x - ref.cx, points[0].y - ref.cy) - ref.r) ** 2;
+
+  for (let i = 1; i < points.length; i++) {
+    let l = points[i - 1];
+    let r = points[i];
+    let currAngle = Math.atan2(r.y - ref.cy, r.x - ref.cx);
+    let delta = Math.atan2(Math.sin(currAngle - prevAngle), Math.cos(currAngle - prevAngle));
+
+    if (Math.abs(stats.angle + delta) >= 2 * Math.PI) {
+      r = points[0];
+    }
+    prevAngle = currAngle;
+    stats.area += l.x * r.y - r.x * l.y;
+    stats.perimeter += Math.hypot(r.x - l.x, r.y - l.y);
+    stats.angle += delta;
+    stats.points.push(r);
+
+    const dist = Math.hypot(r.x - ref.cx, r.y - ref.cy);
+    varSum += (dist - ref.r) ** 2;
+
+    if (Math.abs(stats.angle) >= 2 * Math.PI) break;
   }
-  const meanX = sumX / n;
-  const meanY = sumY / n;
+
+  stats.area = Math.abs(stats.area) / 2;
+  stats.angle = Math.abs(stats.angle);
+  stats.rad_std_dev = Math.sqrt(varSum / stats.points.length);
+  stats.rad_cv = ref.r > 0 ? stats.rad_std_dev / ref.r : 1;
+  return stats;
+};
+
+export function getCenter(points: Point[]): Point | null {
+  if (points.length < 3) return null;
+
+  const ptsSum = points.reduce(
+    (acc, pt) => {
+      acc.x += pt.x;
+      acc.y += pt.y;
+      return acc;
+    },
+    { x: 0, y: 0 }
+  );
+
+  const meanX = ptsSum.x / points.length;
+  const meanY = ptsSum.y / points.length;
 
   let Suu = 0;
   let Svv = 0;
@@ -45,9 +111,9 @@ export function fitCircle(pts: Point[]): ReferenceCircle | null {
   let Suvv = 0;
   let Svuu = 0;
 
-  for (let i = 0; i < n; i++) {
-    const u = pts[i].x - meanX;
-    const v = pts[i].y - meanY;
+  for (let i = 0; i < points.length; i++) {
+    const u = points[i].x - meanX;
+    const v = points[i].y - meanY;
     const u2 = u * u;
     const v2 = v * v;
     Suu += u2;
@@ -66,9 +132,8 @@ export function fitCircle(pts: Point[]): ReferenceCircle | null {
   const vc = (0.5 * ((Svvv + Svuu) * Suu - (Suuu + Suvv) * Suv)) / det;
 
   return {
-    cx: uc + meanX,
-    cy: vc + meanY,
-    r: Math.sqrt(uc * uc + vc * vc + (Suu + Svv) / n),
+    x: uc + meanX,
+    y: vc + meanY,
   };
 }
 
@@ -131,7 +196,7 @@ export function trimStrokeTo360(
       const interpY = pts[i - 1].y + t * (pts[i].y - pts[i - 1].y);
       trimmed.push({ x: interpX, y: interpY });
 
-      return { trimmed, currAngle };
+      return { trimmed, delta };
     }
 
     total = nextTotal;
@@ -142,43 +207,24 @@ export function trimStrokeTo360(
   return { trimmed, reached360: false };
 }
 
-export function evaluateCircle(pts: Point[], fit: ReferenceCircle): CircleEvaluation {
-  const area = calculateShoelaceArea(pts);
-  const perimeter = calculatePerimeter(pts);
-
+export function evaluateCircle(stats: CircleStats): CircleEvaluation {
   // 1. Isoperimetric Quotient
   let Q = 0;
-  if (perimeter > 0) {
-    Q = (4 * Math.PI * area) / (perimeter * perimeter);
+  if (stats.perimeter > 0) {
+    Q = (4 * Math.PI * stats.area) / (stats.perimeter * stats.perimeter);
   }
   Q = Math.min(1, Math.max(0, Q));
 
-  // 2. Radial Deviation (Coefficient of Variation)
-  let sumR = 0;
-  const radii = pts.map((p) => {
-    const r = Math.hypot(p.x - fit.cx, p.y - fit.cy);
-    sumR += r;
-    return r;
-  });
-  const meanR = sumR / pts.length;
-  let varSum = 0;
-  for (const r of radii) {
-    varSum += (r - meanR) ** 2;
-  }
-  const stdDevR = Math.sqrt(varSum / pts.length);
-  const cvR = meanR > 0 ? stdDevR / meanR : 1;
-
-  // Quadratic radial curve:
-  // Under 5% cvR docks < 5%. Over 15% (corners) drops to 0.
-  const errR = Math.min(1, cvR / 0.16);
+  // 2. Radial Deviation (using precomputed rad_cv)
+  const errR = Math.min(1, stats.rad_cv / 0.16);
   const radialFactor = Math.max(0, 1 - errR * errR);
 
   // 3. Aspect Ratio
   let minX = Infinity;
-  maxX = -Infinity;
+  let maxX = -Infinity;
   let minY = Infinity;
-  maxY = -Infinity;
-  for (const p of pts) {
+  let maxY = -Infinity;
+  for (const p of stats.points) {
     if (p.x < minX) minX = p.x;
     if (p.x > maxX) maxX = p.x;
     if (p.y < minY) minY = p.y;
@@ -188,8 +234,7 @@ export function evaluateCircle(pts: Point[], fit: ReferenceCircle): CircleEvalua
   const h = maxY - minY;
   const aspect = w > 0 && h > 0 ? Math.min(w, h) / Math.max(w, h) : 0;
 
-  // Quadratic aspect curve:
-  // 0.90+ docks < 3%. Below 0.65 docks heavily.
+  // Quadratic aspect curve
   const errAspect = Math.min(1, (1 - aspect) / 0.4);
   const aspectFactor = Math.max(0, 1 - errAspect * errAspect);
 
@@ -197,15 +242,11 @@ export function evaluateCircle(pts: Point[], fit: ReferenceCircle): CircleEvalua
   let finalScore = Q * radialFactor * aspectFactor * 100;
   finalScore = Math.max(0, Math.min(100, finalScore));
 
-  const { title, feedback } = getFeedback(finalScore);
-
   return {
     score: finalScore,
     aspect,
-    cvR,
+    cvR: stats.rad_cv,
     iso: Q,
-    title,
-    feedback,
   };
 }
 

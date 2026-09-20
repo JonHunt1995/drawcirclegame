@@ -2,9 +2,8 @@ import {
   Point,
   ReferenceCircle,
   CircleEvaluation,
-  fitCircle,
-  calculateCumulativeAngle,
-  trimStrokeTo360,
+  CircleStats,
+  getCircleStatsFromPoints,
   evaluateCircle,
 } from '../shared/circle';
 
@@ -14,12 +13,10 @@ const ctx = canvas.getContext('2d')!;
 const hud = document.getElementById('progress-hud')!;
 const huddleCard = document.getElementById('huddle-card')!;
 const scoreVal = document.getElementById('score-val')!;
-const scoreTitle = document.getElementById('score-title')!;
-const scoreFeedback = document.getElementById('score-feedback')!;
 const statAspect = document.getElementById('stat-aspect')!;
 const statVariance = document.getElementById('stat-variance')!;
 const statIso = document.getElementById('stat-iso')!;
-const retryBtn = document.getElementById('retry-btn')!;
+const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
 
 let points: Point[] = [];
 let isDrawing = false;
@@ -49,6 +46,8 @@ function reset() {
   ghostCircle = null;
   hud.textContent = 'Draw a continuous circle';
   huddleCard.classList.add('hidden');
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Submit Score';
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -84,11 +83,13 @@ canvas.addEventListener('pointermove', (e: PointerEvent) => {
   redraw();
 
   if (points.length >= 20 && totalPathLength >= 100) {
-    const fit = fitCircle(points);
+    const fit = ReferenceCircle.fromPoints(points);
     if (fit && fit.r < 2500 && fit.r > 15) {
-      const angle = Math.abs(calculateCumulativeAngle(points, fit.cx, fit.cy));
-      const deg = Math.floor((angle / (2 * Math.PI)) * 360);
-      hud.textContent = `${deg}° drawn (Release when ready)`;
+      const stats = getCircleStatsFromPoints(points, fit);
+      if (stats) {
+        const deg = Math.floor((stats.angle / (2 * Math.PI)) * 360);
+        hud.textContent = `${deg}° drawn (Release when ready)`;
+      }
     }
   }
 });
@@ -102,14 +103,19 @@ canvas.addEventListener('pointerup', () => {
     return;
   }
 
-  const fit = fitCircle(points);
+  const fit = ReferenceCircle.fromPoints(points);
   if (!fit || fit.r > 3000 || fit.r < 15) {
     hud.textContent = 'Not a recognized loop. Try again';
     return;
   }
 
-  const totalAngle = Math.abs(calculateCumulativeAngle(points, fit.cx, fit.cy));
-  const degrees = (totalAngle / (2 * Math.PI)) * 360;
+  const stats = getCircleStatsFromPoints(points, fit);
+  if (!stats) {
+    hud.textContent = 'Not a recognized loop. Try again';
+    return;
+  }
+
+  const degrees = (stats.angle / (2 * Math.PI)) * 360;
   const startEndDist = Math.hypot(
     points[points.length - 1].x - points[0].x,
     points[points.length - 1].y - points[0].y
@@ -123,17 +129,12 @@ canvas.addEventListener('pointerup', () => {
     return;
   }
 
-  // Trim excess tail if drawn >= 360°
-  if (totalAngle >= 2 * Math.PI) {
-    const { trimmed } = trimStrokeTo360(points, fit.cx, fit.cy);
-    points = trimmed;
-  }
-
-  ghostCircle = fitCircle(points) || fit;
+  points = stats.points;
+  ghostCircle = fit;
   hasFinished = true;
   hud.textContent = 'Circle Completed';
 
-  const evaluation = evaluateCircle(points, ghostCircle);
+  const evaluation = evaluateCircle(stats);
   displayHuddleCard(evaluation);
   redraw();
 });
@@ -143,8 +144,6 @@ function displayHuddleCard(evalResult: CircleEvaluation) {
   statAspect.textContent = evalResult.aspect.toFixed(2);
   statVariance.textContent = `${(evalResult.cvR * 100).toFixed(1)}%`;
   statIso.textContent = evalResult.iso.toFixed(2);
-  scoreTitle.textContent = evalResult.title;
-  scoreFeedback.textContent = evalResult.feedback;
 
   huddleCard.classList.remove('hidden');
 }
@@ -187,4 +186,23 @@ function redraw() {
   ctx.restore();
 }
 
-retryBtn.addEventListener('click', reset);
+submitBtn.addEventListener('click', async () => {
+  if (!hasFinished || points.length === 0) return;
+  const playerName = prompt('Enter your name (optional):', 'Anonymous') || 'Anonymous';
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting...';
+  try {
+    const res = await fetch('/api/v1/game', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: playerName, points }),
+    });
+    if (!res.ok) throw new Error('Submission failed');
+    const data = (await res.json()) as { gameid: string };
+    window.location.href = `/game/${data.gameid}`;
+  } catch (err) {
+    alert('Failed to submit score. Please try again.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Score';
+  }
+});

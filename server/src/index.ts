@@ -3,7 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import {
   Point,
   ReferenceCircle,
-  fitCircle,
+  getCircleStatsFromPoints,
   evaluateCircle,
   pointsToSvgPath,
 } from '../../shared/circle';
@@ -38,19 +38,24 @@ app.post('/api/v1/game', async (c) => {
     throw new HTTPException(400, { message: 'Valid circle path points are required' });
   }
 
-  const fit = fitCircle(body.points);
+  const fit = ReferenceCircle.fromPoints(body.points);
   if (!fit) {
     throw new HTTPException(400, { message: 'Points do not form a recognizable circle' });
   }
 
-  const evaluation = evaluateCircle(body.points, fit);
+  const stats = getCircleStatsFromPoints(body.points, fit);
+  if (!stats) {
+    throw new HTTPException(400, { message: 'Points do not form a recognizable circle' });
+  }
+
+  const evaluation = evaluateCircle(stats);
   const gameId = crypto.randomUUID();
 
   await c.env.DB.prepare(
     `INSERT INTO games (id, player_name, paths, score, reference_cx, reference_cy, reference_radius)
      VALUES (?, ?, ?, ?, ?, ?, ?)`
   )
-    .bind(gameId, playerName, JSON.stringify(body.points), evaluation.score, fit.cx, fit.cy, fit.r)
+    .bind(gameId, playerName, JSON.stringify(stats.points), evaluation.score, fit.cx, fit.cy, fit.r)
     .run();
 
   const payload: gameData = {
