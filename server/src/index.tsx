@@ -7,7 +7,7 @@ import {
   evaluateCircle,
   pointsToSvgPath,
 } from '../../shared/circle';
-import { gameTemplate } from './template';
+import { GameTemplate } from './template';
 
 type Bindings = {
   DB: D1Database;
@@ -89,12 +89,12 @@ app.get('/game/:id', async (c) => {
   const svgPath = pointsToSvgPath(points);
 
   return c.html(
-    gameTemplate({
-      playerName: game.player_name,
-      score: game.score,
-      svgPath,
-      refCircle: new ReferenceCircle(game.reference_cx, game.reference_cy, game.reference_radius),
-    })
+    <GameTemplate
+      playerName={game.player_name}
+      score={game.score}
+      svgPath={svgPath}
+      refCircle={new ReferenceCircle(game.reference_cx, game.reference_cy, game.reference_radius)}
+    />
   );
 });
 
