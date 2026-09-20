@@ -8,7 +8,7 @@
     "binding": "ASSETS",
   },
   "build": {
-    "command": "pnpm run build",
+    "command": "pnpm -w run build",
     "watch_dir": ["client/script.ts", "shared"],
   },
   "d1_databases": [
