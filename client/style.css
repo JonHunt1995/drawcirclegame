@@ -22,6 +22,15 @@ body {
   padding: 20px;
 }
 
+.game-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 14px;
+  letter-spacing: -0.02em;
+}
+
 .canvas-wrapper {
   position: relative;
   width: 100%;

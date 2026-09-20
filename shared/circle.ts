@@ -39,6 +39,7 @@ export type CircleStats = {
   perimeter: number;
   rad_std_dev: number;
   rad_cv: number;
+  aspect_ratio: number;
 };
 
 export const getCircleStatsFromPoints = (
@@ -55,10 +56,15 @@ export const getCircleStatsFromPoints = (
     perimeter: 0,
     rad_std_dev: 0,
     rad_cv: 0,
+    aspect_ratio: 0,
   };
 
   let prevAngle = Math.atan2(points[0].y - ref.cy, points[0].x - ref.cx);
   let varSum = (Math.hypot(points[0].x - ref.cx, points[0].y - ref.cy) - ref.r) ** 2;
+  let minX = points[0].x;
+  let maxX = points[0].x;
+  let minY = points[0].y;
+  let maxY = points[0].y;
 
   for (let i = 1; i < points.length; i++) {
     let l = points[i - 1];
@@ -69,6 +75,12 @@ export const getCircleStatsFromPoints = (
     if (Math.abs(stats.angle + delta) >= 2 * Math.PI) {
       r = points[0];
     }
+
+    if (r.x < minX) minX = r.x;
+    if (r.x > maxX) maxX = r.x;
+    if (r.y < minY) minY = r.y;
+    if (r.y > maxY) maxY = r.y;
+
     prevAngle = currAngle;
     stats.area += l.x * r.y - r.x * l.y;
     stats.perimeter += Math.hypot(r.x - l.x, r.y - l.y);
@@ -85,6 +97,9 @@ export const getCircleStatsFromPoints = (
   stats.angle = Math.abs(stats.angle);
   stats.rad_std_dev = Math.sqrt(varSum / stats.points.length);
   stats.rad_cv = ref.r > 0 ? stats.rad_std_dev / ref.r : 1;
+  const w = maxX - minX;
+  const h = maxY - minY;
+  stats.aspect_ratio = w > 0 && h > 0 ? Math.min(w, h) / Math.max(w, h) : 0;
   return stats;
 };
 
@@ -149,23 +164,8 @@ export function evaluateCircle(stats: CircleStats): CircleEvaluation {
   const errR = Math.min(1, stats.rad_cv / 0.16);
   const radialFactor = Math.max(0, 1 - errR * errR);
 
-  // 3. Aspect Ratio
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-  for (const p of stats.points) {
-    if (p.x < minX) minX = p.x;
-    if (p.x > maxX) maxX = p.x;
-    if (p.y < minY) minY = p.y;
-    if (p.y > maxY) maxY = p.y;
-  }
-  const w = maxX - minX;
-  const h = maxY - minY;
-  const aspect = w > 0 && h > 0 ? Math.min(w, h) / Math.max(w, h) : 0;
-
-  // Quadratic aspect curve
-  const errAspect = Math.min(1, (1 - aspect) / 0.4);
+  // 3. Aspect Ratio Factor (using precomputed stats.aspect_ratio)
+  const errAspect = Math.min(1, (1 - stats.aspect_ratio) / 0.4);
   const aspectFactor = Math.max(0, 1 - errAspect * errAspect);
 
   // Balanced Score calculation
@@ -174,7 +174,7 @@ export function evaluateCircle(stats: CircleStats): CircleEvaluation {
 
   return {
     score: finalScore,
-    aspect,
+    aspect: stats.aspect_ratio,
     cvR: stats.rad_cv,
     iso: Q,
   };
