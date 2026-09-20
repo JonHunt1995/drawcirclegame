@@ -1,6 +1,11 @@
+packages:
+  - '.'
+  - 'server'
+
 onlyBuiltDependencies:
   - esbuild
   - workerd
+
 allowBuilds:
   esbuild: true
   workerd: true
