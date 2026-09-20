@@ -4,12 +4,17 @@
   "type": "module",
   "scripts": {
     "build": "esbuild client/script.ts --bundle --outfile=client/dist/script.js",
-    "dev": "pnpm --dir server dev",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
+  "dependencies": {
+    "hono": "^4.13.7"
+  },
   "devDependencies": {
     "esbuild": "^0.28.2",
-    "prettier": "^3.9.7"
+    "prettier": "^3.9.7",
+    "wrangler": "^4.135.0"
   }
 }

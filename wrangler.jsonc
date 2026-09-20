@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "drawcirclegame",
+  "main": "server/src/index.ts",
+  "compatibility_date": "2026-09-08",
+  "assets": {
+    "directory": "client",
+    "binding": "ASSETS",
+  },
+  "build": {
+    "command": "pnpm run build",
+    "watch_dir": ["client/script.ts", "shared"],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "drawcircle-db",
+      "database_id": "863bb6d3-dbb8-4867-99e6-371620c042aa",
+      "migrations_dir": "server/migrations",
+    },
+  ],
+}
