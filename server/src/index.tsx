@@ -7,7 +7,9 @@ import {
   evaluateCircle,
   pointsToSvgPath,
 } from '../../shared/circle';
-import { GameTemplate } from './template';
+import { OGMetadata, SSRShell } from './components/SSRShell';
+import { GameCard } from './components/GameCard';
+import type { GameData } from '../../shared/game';
 
 type Bindings = {
   DB: D1Database;
@@ -18,13 +20,6 @@ const app = new Hono<{ Bindings: Bindings }>();
 type gameRequest = {
   name?: string;
   points: Point[];
-};
-
-type gameData = {
-  gameid: string;
-  name: string;
-  score: number;
-  reference: ReferenceCircle;
 };
 
 app.post('/api/v1/game', async (c) => {
@@ -58,7 +53,7 @@ app.post('/api/v1/game', async (c) => {
     .bind(gameId, playerName, JSON.stringify(stats.points), evaluation.score, fit.cx, fit.cy, fit.r)
     .run();
 
-  const payload: gameData = {
+  const payload = {
     gameid: gameId,
     name: playerName,
     score: evaluation.score,
@@ -70,16 +65,9 @@ app.post('/api/v1/game', async (c) => {
 
 app.get('/game/:id', async (c) => {
   const id = c.req.param('id');
-  const game = await c.env.DB.prepare('SELECT * FROM games WHERE id = ?').bind(id).first<{
-    id: string;
-    player_name: string;
-    paths: string;
-    score: number;
-    reference_cx: number;
-    reference_cy: number;
-    reference_radius: number;
-    created_at: string;
-  }>();
+  const game = await c.env.DB.prepare('SELECT * FROM games WHERE id = ?')
+    .bind(id)
+    .first<GameData>();
 
   if (!game) {
     throw new HTTPException(404, { message: 'Game not found' });
@@ -87,15 +75,26 @@ app.get('/game/:id', async (c) => {
 
   const points: Point[] = JSON.parse(game.paths);
   const svgPath = pointsToSvgPath(points);
+  const refCircle: ReferenceCircle = {
+    cx: game.reference_cx,
+    cy: game.reference_cy,
+    r: game.reference_radius,
+  };
+  const og: OGMetadata = {
+    title: `${game.player_name} scored ${game.score.toFixed(1)}%`,
+    description: 'Check out my drawing and see if you can beat my score!',
+    type: 'website',
+  };
 
   return c.html(
-    <GameTemplate
-      playerName={game.player_name}
-      score={game.score}
-      svgPath={svgPath}
-      refCircle={new ReferenceCircle(game.reference_cx, game.reference_cy, game.reference_radius)}
-    />
+    <SSRShell title={og.title} og={og}>
+      <GameCard
+        playerName={game.player_name}
+        score={game.score}
+        svgPath={svgPath}
+        refCircle={refCircle}
+      />
+    </SSRShell>
   );
 });
-
 export default app;

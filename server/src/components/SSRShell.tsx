@@ -1,7 +1,7 @@
 import type { FC, Child } from 'hono/jsx';
 
 export interface OGMetadata {
-  title?: string;
+  title: string;
   description?: string;
   type?: string;
   image?: string;
