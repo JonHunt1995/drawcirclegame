@@ -49,17 +49,12 @@ export const SSRShell: FC<SSRShellProps> = ({
         <link rel="stylesheet" href="/style.css" />
       </head>
       <body>
-        {wrapInAppContainer ? (
-          <div class="app-container">
-            {showNav && <NavBar currentPath={currentPath} />}
-            {content}
-          </div>
-        ) : (
-          <>
-            {showNav && <NavBar currentPath={currentPath} />}
-            {content}
-          </>
+        {showNav && (
+          <header class="site-header">
+            <NavBar currentPath={currentPath} />
+          </header>
         )}
+        {wrapInAppContainer ? <main class="app-container">{content}</main> : content}
       </body>
     </html>
   );

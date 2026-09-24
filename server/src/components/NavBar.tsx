@@ -6,15 +6,14 @@ export function NavBar({ currentPath }: NavBarProps) {
   return (
     <nav class="site-nav">
       <a href="/" class="nav-brand">
-        <span class="brand-icon">⭕</span>
-        <span class="brand-text">DrawCircle</span>
+        DrawCircle
       </a>
       <div class="nav-links">
         <a href="/" class={`nav-link ${currentPath === '/' ? 'active' : ''}`}>
           Play
         </a>
         <a href="/leaderboard" class={`nav-link ${currentPath === '/leaderboard' ? 'active' : ''}`}>
-          🏆 Leaderboard
+          Leaderboard
         </a>
       </div>
     </nav>

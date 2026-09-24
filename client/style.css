@@ -27,41 +27,49 @@ body {
   background-color: #0b0f19;
   color: #f8fafc;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  padding: var(--space-xs);
   overflow-x: hidden;
+}
+
+/* Full-bleed Sticky Header */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.site-nav {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-2xs) var(--space-xs);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .app-container {
   width: 100%;
   max-width: 900px;
-  padding: var(--space-2xs);
-}
-
-/* Site Navigation */
-.site-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-2xs) 0;
-  margin-bottom: var(--space-xs);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: var(--space-xs);
 }
 
 .nav-brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3xs);
   text-decoration: none;
   color: #f8fafc;
   font-size: var(--step-0);
   font-weight: 800;
   letter-spacing: -0.02em;
+  transition: color 0.15s ease;
 }
 
-.nav-brand:hover .brand-text {
+.nav-brand:hover {
   color: #38bdf8;
 }
 
