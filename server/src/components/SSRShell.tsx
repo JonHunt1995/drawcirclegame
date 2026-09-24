@@ -1,4 +1,5 @@
 import type { FC, Child } from 'hono/jsx';
+import { NavBar } from './NavBar';
 
 export interface OGMetadata {
   title: string;
@@ -14,6 +15,8 @@ export interface SSRShellProps {
   components?: Child[];
   children?: Child;
   wrapInAppContainer?: boolean;
+  currentPath?: string;
+  showNav?: boolean;
 }
 
 export const SSRShell: FC<SSRShellProps> = ({
@@ -22,6 +25,8 @@ export const SSRShell: FC<SSRShellProps> = ({
   components,
   children,
   wrapInAppContainer = true,
+  currentPath,
+  showNav = true,
 }) => {
   const content = (
     <>
@@ -43,7 +48,19 @@ export const SSRShell: FC<SSRShellProps> = ({
         {og?.url && <meta property="og:url" content={og.url} />}
         <link rel="stylesheet" href="/style.css" />
       </head>
-      <body>{wrapInAppContainer ? <div class="app-container">{content}</div> : content}</body>
+      <body>
+        {wrapInAppContainer ? (
+          <div class="app-container">
+            {showNav && <NavBar currentPath={currentPath} />}
+            {content}
+          </div>
+        ) : (
+          <>
+            {showNav && <NavBar currentPath={currentPath} />}
+            {content}
+          </>
+        )}
+      </body>
     </html>
   );
 };

@@ -11,6 +11,7 @@ import { OGMetadata, SSRShell } from './components/SSRShell';
 import { GameCard } from './components/GameCard';
 import type { GameData } from '../../shared/game';
 import { LeaderBoard } from './components/LeaderBoard';
+import { CanvasGame } from './components/CanvasGame';
 
 type Bindings = {
   DB: D1Database;
@@ -22,6 +23,20 @@ type gameRequest = {
   name?: string;
   points: Point[];
 };
+
+app.get('/', (c) => {
+  const og: OGMetadata = {
+    title: 'Draw a Circle - Precision Drawing Game',
+    description: 'Draw a circle as perfectly as you can and test your accuracy!',
+    type: 'website',
+  };
+
+  return c.html(
+    <SSRShell title={og.title} og={og} currentPath="/">
+      <CanvasGame />
+    </SSRShell>
+  );
+});
 
 app.post('/api/v1/game', async (c) => {
   const body = await c.req.json<gameRequest>();
@@ -88,7 +103,7 @@ app.get('/game/:id', async (c) => {
   };
 
   return c.html(
-    <SSRShell title={og.title} og={og}>
+    <SSRShell title={og.title} og={og} currentPath={`/game/${id}`}>
       <GameCard
         playerName={game.player_name}
         score={game.score}
@@ -109,13 +124,13 @@ app.get('/leaderboard', async (c) => {
   const { results } = await c.env.DB.prepare(query).bind().all<GameData>();
 
   const og: OGMetadata = {
-    title: 'Leaderboard',
+    title: 'Leaderboard - Top 25 Circles',
     description: 'The 25 best circle drawings',
     type: 'website',
   };
 
   return c.html(
-    <SSRShell title={og.title} og={og}>
+    <SSRShell title={og.title} og={og} currentPath="/leaderboard">
       <LeaderBoard entries={results} />
     </SSRShell>
   );
