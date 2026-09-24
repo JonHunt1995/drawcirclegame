@@ -3,10 +3,21 @@ import type { GameData } from '../../../shared/game';
 export const LeaderBoard = ({ entries = [] }: { entries?: GameData[] }) => {
   if (entries.length === 0) {
     return (
-      <div>
-        <p>No circles drawn yet</p>
-        <a href="/">Draw a Circle</a>
-      </div>
+      <>
+        <h1 class="game-title">Top 25 Circle Drawings</h1>
+        <div class="leaderboard-wrapper">
+          <div class="leaderboard-empty">
+            <p style={{ marginBottom: 'var(--space-s)' }}>No circles drawn yet</p>
+            <a
+              href="/"
+              class="huddle-btn"
+              style={{ textDecoration: 'none', display: 'inline-block' }}
+            >
+              Draw a Circle
+            </a>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -14,22 +25,34 @@ export const LeaderBoard = ({ entries = [] }: { entries?: GameData[] }) => {
   const headers = headerNames.map((header) => <th>{header}</th>);
 
   const rows = entries.map((entry, i) => (
-    <tr>
+    <tr key={entry.id}>
       <th scope="row">{i + 1}</th>
       <td>{entry.player_name}</td>
-      <td>{entry.score.toFixed(1)}%</td>
+      <td class="leaderboard-score">{entry.score.toFixed(1)}%</td>
       <td>
         <a href={`/game/${entry.id}`} class="huddle-btn">
-          Click here!
+          View
         </a>
       </td>
     </tr>
   ));
 
   return (
-    <table class="leaderboard">
-      <tr>{headers}</tr>
-      {rows}
-    </table>
+    <>
+      <h1 class="game-title">Top 25 Circle Drawings</h1>
+      <div class="leaderboard-wrapper">
+        <table class="leaderboard">
+          <thead>
+            <tr>{headers}</tr>
+          </thead>
+          <tbody>{rows}</tbody>
+        </table>
+      </div>
+      <div style={{ textAlign: 'center', marginTop: 'var(--space-s)' }}>
+        <a href="/" class="huddle-btn" style={{ textDecoration: 'none', display: 'inline-block' }}>
+          Draw Your Own Circle
+        </a>
+      </div>
+    </>
   );
 };
