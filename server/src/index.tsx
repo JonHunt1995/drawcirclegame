@@ -10,6 +10,7 @@ import {
 import { OGMetadata, SSRShell } from './components/SSRShell';
 import { GameCard } from './components/GameCard';
 import type { GameData } from '../../shared/game';
+import { LeaderBoard } from './components/LeaderBoard';
 
 type Bindings = {
   DB: D1Database;
@@ -94,6 +95,28 @@ app.get('/game/:id', async (c) => {
         svgPath={svgPath}
         refCircle={refCircle}
       />
+    </SSRShell>
+  );
+});
+
+app.get('/leaderboard', async (c) => {
+  const query = `
+  SELECT player_name, score, id
+  FROM games
+  ORDER BY score DESC
+  LIMIT 25
+  `;
+  const { results } = await c.env.DB.prepare(query).bind().all<GameData>();
+
+  const og: OGMetadata = {
+    title: 'Leaderboard',
+    description: 'The 25 best circle drawings',
+    type: 'website',
+  };
+
+  return c.html(
+    <SSRShell title={og.title} og={og}>
+      <LeaderBoard entries={results} />
     </SSRShell>
   );
 });

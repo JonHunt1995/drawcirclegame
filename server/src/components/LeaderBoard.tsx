@@ -1,6 +1,6 @@
 import type { GameData } from '../../../shared/game';
 
-export const LeaderBoard = ({ entries }: { entries: GameData[] }) => {
+export const LeaderBoard = ({ entries = [] }: { entries?: GameData[] }) => {
   if (entries.length === 0) {
     return (
       <div>
