@@ -1,6 +1,7 @@
 # Build output
 dist/
 client/dist/
+.wrangler/
 
 # Logs
 logs
