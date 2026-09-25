@@ -40,9 +40,14 @@ export function CanvasGame() {
             </div>
           </div>
 
-          <button id="submit-btn" class="huddle-btn">
-            Submit Score
-          </button>
+          <div class="huddle-actions">
+            <button id="submit-btn" class="huddle-btn">
+              Submit
+            </button>
+            <button id="reset-btn" class="huddle-btn huddle-btn-secondary">
+              Reset
+            </button>
+          </div>
         </div>
       </div>
 

@@ -11,17 +11,16 @@ const canvas = document.getElementById('circleCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 
 const hud = document.getElementById('progress-hud')!;
+const hudText = 'Draw a continuous circle';
 const huddleCard = document.getElementById('huddle-card')!;
 const scoreVal = document.getElementById('score-val')!;
 const statAspect = document.getElementById('stat-aspect')!;
 const statVariance = document.getElementById('stat-variance')!;
 const statIso = document.getElementById('stat-iso')!;
+const resetBtn = document.getElementById('reset-btn') as HTMLButtonElement;
 const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
 
 let points: Point[] = [];
-let isDrawing = false;
-let hasFinished = false;
-let totalPathLength = 0;
 let ghostCircle: ReferenceCircle | null = null;
 
 function setupCanvas() {
@@ -38,30 +37,33 @@ window.addEventListener('resize', () => {
 });
 setupCanvas();
 
-function reset() {
+function reset(hint: string = hudText) {
   points = [];
-  isDrawing = false;
-  hasFinished = false;
-  totalPathLength = 0;
   ghostCircle = null;
-  hud.textContent = 'Draw a continuous circle';
+  hud.textContent = hint;
   huddleCard.classList.add('hidden');
   submitBtn.disabled = false;
-  submitBtn.textContent = 'Submit Score';
+  submitBtn.textContent = 'Submit';
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (hint === hudText) return;
+
+  setTimeout(() => {
+    hud.textContent = hudText;
+  }, 1500);
 }
 
 function getPoint(e: PointerEvent): Point {
   const rect = canvas.getBoundingClientRect();
   return {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top,
+    x: Math.round(e.clientX - rect.left),
+    y: Math.round(e.clientY - rect.top),
   };
 }
 
 canvas.addEventListener('pointerdown', (e: PointerEvent) => {
-  if (hasFinished) reset();
-  isDrawing = true;
+  if (ghostCircle) reset();
+
   canvas.setPointerCapture(e.pointerId);
 
   const pt = getPoint(e);
@@ -70,19 +72,13 @@ canvas.addEventListener('pointerdown', (e: PointerEvent) => {
 });
 
 canvas.addEventListener('pointermove', (e: PointerEvent) => {
-  if (!isDrawing || hasFinished) return;
+  if (!e.buttons || ghostCircle) return;
 
   const pt = getPoint(e);
-  const prevPt = points[points.length - 1];
-
-  const stepDist = Math.hypot(pt.x - prevPt.x, pt.y - prevPt.y);
-  if (stepDist < 3) return;
-
   points.push(pt);
-  totalPathLength += stepDist;
   redraw();
 
-  if (points.length >= 20 && totalPathLength >= 100) {
+  if (points.length >= 20) {
     const fit = ReferenceCircle.fromPoints(points);
     if (fit && fit.r < 2500 && fit.r > 15) {
       const stats = getCircleStatsFromPoints(points, fit);
@@ -95,23 +91,27 @@ canvas.addEventListener('pointermove', (e: PointerEvent) => {
 });
 
 canvas.addEventListener('pointerup', () => {
-  if (!isDrawing || hasFinished) return;
-  isDrawing = false;
+  if (ghostCircle) return;
 
-  if (points.length < 20 || totalPathLength < 100) {
-    hud.textContent = 'Too small! Draw a full circle';
+  if (points.length <= 3) {
+    reset(hudText);
+    return;
+  }
+
+  if (points.length < 20) {
+    reset('Too small! Draw a full circle');
     return;
   }
 
   const fit = ReferenceCircle.fromPoints(points);
   if (!fit || fit.r > 3000 || fit.r < 15) {
-    hud.textContent = 'Not a recognized loop. Try again';
+    reset('Not a recognized loop. Try again');
     return;
   }
 
   const stats = getCircleStatsFromPoints(points, fit);
   if (!stats) {
-    hud.textContent = 'Not a recognized loop. Try again';
+    reset('Not a recognized loop. Try again');
     return;
   }
 
@@ -122,16 +122,13 @@ canvas.addEventListener('pointerup', () => {
   );
 
   // Accept if >= 330° OR if endpoints met close together
-  const isCompleteEnough = degrees >= 330 || (degrees >= 280 && startEndDist < fit.r * 0.35);
-
-  if (!isCompleteEnough) {
-    hud.textContent = `Incomplete circle at (${Math.round(degrees)}°). Try again!`;
+  if (!(degrees >= 330 || (degrees >= 280 && startEndDist < fit.r * 0.35))) {
+    reset(`Incomplete circle at (${Math.round(degrees)}°). Try again!`);
     return;
   }
 
   points = stats.points;
   ghostCircle = fit;
-  hasFinished = true;
   hud.textContent = 'Circle Completed';
 
   const evaluation = evaluateCircle(stats);
@@ -152,7 +149,7 @@ function redraw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // 1. Ghost comparison circle
-  if (hasFinished && ghostCircle) {
+  if (ghostCircle) {
     ctx.save();
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 2;
@@ -172,7 +169,7 @@ function redraw() {
   if (points.length < 2) return;
 
   ctx.save();
-  ctx.strokeStyle = hasFinished ? '#f8fafc' : '#ffffff';
+  ctx.strokeStyle = ghostCircle ? '#f8fafc' : '#ffffff';
   ctx.lineWidth = 3.5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
@@ -187,7 +184,7 @@ function redraw() {
 }
 
 submitBtn.addEventListener('click', async () => {
-  if (!hasFinished || points.length === 0) return;
+  if (points.length === 0) return;
   const playerName = prompt('Enter your name (optional):', 'Anonymous') || 'Anonymous';
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting...';
@@ -203,6 +200,8 @@ submitBtn.addEventListener('click', async () => {
   } catch (err) {
     alert('Failed to submit score. Please try again.');
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit Score';
+    submitBtn.textContent = 'Submit';
   }
 });
+
+resetBtn.addEventListener('click', () => reset());
