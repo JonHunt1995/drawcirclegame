@@ -284,6 +284,13 @@ canvas {
   flex-wrap: wrap;
 }
 
+.huddle-actions {
+  display: flex;
+  gap: var(--space-2xs);
+  align-items: center;
+  flex-shrink: 0;
+}
+
 /* Adaptive layout for narrow viewports */
 @media (max-width: 520px) {
   .huddle-card {
@@ -294,7 +301,7 @@ canvas {
     order: 1;
   }
 
-  .huddle-btn {
+  .huddle-actions {
     order: 2;
   }
 
