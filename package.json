@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild client/script.ts --bundle --outfile=client/dist/script.js",
+    "build": "esbuild client/script.ts client/gameshare.ts --bundle --outdir=client/dist",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
     "format": "prettier --write .",

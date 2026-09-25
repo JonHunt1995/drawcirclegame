@@ -9,7 +9,7 @@
   },
   "build": {
     "command": "pnpm -w run build",
-    "watch_dir": ["client/script.ts", "shared"],
+    "watch_dir": ["client/script.ts", "client/gameshare.ts", "client/share.ts", "shared"],
   },
   "d1_databases": [
     {

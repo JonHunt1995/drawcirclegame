@@ -255,6 +255,35 @@ canvas {
   transform: translateY(-1px);
 }
 
+.huddle-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.huddle-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.huddle-btn.copied {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.game-card-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-s);
+  flex-wrap: wrap;
+}
+
 /* Adaptive layout for narrow viewports */
 @media (max-width: 520px) {
   .huddle-card {

@@ -42,11 +42,15 @@ export const GameCard: FC<GameCardProps> = ({ playerName, score, svgPath, refCir
           />
         </svg>
       </div>
-      <div style={{ textAlign: 'center', marginTop: 'var(--space-s)' }}>
-        <a href="/" class="huddle-btn" style={{ textDecoration: 'none', display: 'inline-block' }}>
+      <div class="game-card-actions">
+        <button id="share-btn" class="huddle-btn">
+          Share Result
+        </button>
+        <a href="/" class="huddle-btn huddle-btn-secondary">
           Draw Your Own Circle
         </a>
       </div>
+      <script src="/dist/gameshare.js"></script>
     </>
   );
 };
