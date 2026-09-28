@@ -60,7 +60,7 @@ export function insertTestGame(
   const cx = game.reference_cx ?? 150;
   const cy = game.reference_cy ?? 150;
   const r = game.reference_radius ?? 50;
-  const createdAt = game.created_at ?? new Date().toISOString();
+  const createdAt = game.created_at ?? new Date().toISOString().replace('T', ' ').slice(0, 19);
 
   db.prepare(
     `INSERT INTO games (id, player_name, paths, score, reference_cx, reference_cy, reference_radius, created_at)
@@ -77,4 +77,14 @@ export function insertTestGame(
     reference_radius: r,
     created_at: createdAt,
   };
+}
+
+export function hoursAgo(hours: number): string {
+  const d = new Date(Date.now() - hours * 3600 * 1000);
+  return d.toISOString().replace('T', ' ').slice(0, 19);
+}
+
+export function daysAgo(days: number): string {
+  const d = new Date(Date.now() - days * 86400 * 1000);
+  return d.toISOString().replace('T', ' ').slice(0, 19);
 }

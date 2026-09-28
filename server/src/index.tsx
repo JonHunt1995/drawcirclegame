@@ -10,7 +10,7 @@ import {
 import { OGMetadata, SSRShell } from './components/SSRShell';
 import { GameCard } from './components/GameCard';
 import type { GameData } from '../../shared/game';
-import { LeaderBoard } from './components/LeaderBoard';
+import { LeaderBoard, Timeframe } from './components/LeaderBoard';
 import { CanvasGame } from './components/CanvasGame';
 
 type Bindings = {
@@ -114,10 +114,20 @@ app.get('/game/:id', async (c) => {
   );
 });
 
-app.get('/leaderboard', async (c) => {
+const timeframeQueries: Record<Timeframe, string> = {
+  all: '',
+  daily: "WHERE created_at >= datetime('now', '-1 day')",
+  weekly: "WHERE created_at >= datetime('now', '-7 day')",
+  monthly: "WHERE created_at >= datetime('now', '-30 day')",
+};
+
+app.get('/leaderboard/:timeframe?', async (c) => {
+  const param = c.req.param('timeframe') as Timeframe;
+  const filterQuery = (param && timeframeQueries[param]) || '';
   const query = `
   SELECT player_name, score, id
   FROM games
+  ${filterQuery}
   ORDER BY score DESC
   LIMIT 25
   `;
@@ -131,7 +141,7 @@ app.get('/leaderboard', async (c) => {
 
   return c.html(
     <SSRShell title={og.title} og={og} currentPath="/leaderboard">
-      <LeaderBoard entries={results} />
+      <LeaderBoard entries={results} timeframe={param || 'all'} />
     </SSRShell>
   );
 });
