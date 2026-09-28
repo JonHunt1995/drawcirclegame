@@ -386,3 +386,23 @@ canvas {
   color: #94a3b8;
   font-size: var(--step-0);
 }
+
+.leaderboard-header {
+  margin-bottom: var(--space-m);
+  text-align: center;
+}
+
+.leaderboard-tabs {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin-top: var(--space-xs);
+}
+
+.timeframe-tab {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

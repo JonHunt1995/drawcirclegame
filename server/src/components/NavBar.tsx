@@ -6,7 +6,7 @@ export function NavBar({ currentPath }: NavBarProps) {
   return (
     <nav class="site-nav">
       <a href="/" class="nav-brand">
-        DrawCircle
+        CircleDraw
       </a>
       <div class="nav-links">
         <a href="/" class={`nav-link ${currentPath === '/' ? 'active' : ''}`}>

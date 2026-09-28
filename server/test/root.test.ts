@@ -21,7 +21,7 @@ describe('GET / (SSR Root & Navigation)', () => {
 
     // Navigation bar
     expect(html).toContain('site-nav');
-    expect(html).toContain('DrawCircle');
+    expect(html).toContain('CircleDraw');
     expect(html).toContain('href="/leaderboard"');
   });
 
@@ -34,6 +34,6 @@ describe('GET / (SSR Root & Navigation)', () => {
     const html = await res.text();
 
     expect(html).toContain('site-nav');
-    expect(html).toContain('DrawCircle');
+    expect(html).toContain('CircleDraw');
   });
 });
