@@ -1,28 +1,20 @@
 ---
 name: Bug Report
-about: Report broken behavior, edge cases, or runtime errors
+about: Report broken behavior
 title: 'fix: '
 labels: bug
 ---
 
-### Summary
+### What's Broken?
 
-A clear and concise description of the bug.
+What is happening?
 
 ### Steps to Reproduce
 
-1. Navigate to '...'
-2. Draw or click '...'
-3. Observe unexpected behavior
+1.
+2.
+3.
 
 ### Expected Behavior
 
-What should have happened.
-
-### Actual Behavior
-
-What actually happened (include error logs, console output, or stack traces).
-
-### Proposed Fix
-
-Root-cause diagnosis and suggested files or functions to update.
+What should happen instead?
