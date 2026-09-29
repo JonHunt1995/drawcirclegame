@@ -11,10 +11,5 @@ A concise overview of the problem solved and the architectural direction taken.
 
 ### Verification
 
-- [ ] `pnpm test` passes (unit and integration tests)
-- [ ] `pnpm run format:check` passes (Prettier code style)
+- [ ] Integration tests pass
 - [ ] Manual QA verified on local dev or branch preview
-
-### Deployment Preview
-
-- Branch preview URL (if applicable)

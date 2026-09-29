@@ -1,24 +1,14 @@
 ---
 name: Feature Request
-about: Suggest an idea or new feature for the project
+about: Suggest an idea or new feature
 title: 'feat: '
 labels: enhancement
 ---
 
-### Summary
+### Context / Problem
 
-A clear and concise description of the proposed feature or improvement.
+What problem are we trying to solve or what opportunity exists?
 
-### Motivation
+### Desired Behavior
 
-Why is this needed? What friction, architectural gap, or UX limitation does it solve?
-
-### Proposed Implementation
-
-Technical breakdown of how this will be implemented (components, API routes, SQL queries, or CSS changes).
-
-### Acceptance Criteria
-
-- [ ] Feature implemented as described
-- [ ] All tests pass (`pnpm test`)
-- [ ] Verified in browser on mobile and desktop
+What should happen?
