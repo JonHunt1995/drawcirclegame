@@ -2,6 +2,7 @@
   "name": "drawcirclegame",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "build": "esbuild client/script.ts client/gameshare.ts --bundle --outdir=client/dist",
     "dev": "wrangler dev",
