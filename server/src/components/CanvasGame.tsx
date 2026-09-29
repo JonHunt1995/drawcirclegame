@@ -41,10 +41,10 @@ export function CanvasGame() {
           </div>
 
           <div class="huddle-actions">
-            <button id="submit-btn" class="huddle-btn">
+            <button type="button" id="submit-btn" class="huddle-btn">
               Submit
             </button>
-            <button id="reset-btn" class="huddle-btn huddle-btn-secondary">
+            <button type="button" id="reset-btn" class="huddle-btn huddle-btn-secondary">
               Reset
             </button>
           </div>

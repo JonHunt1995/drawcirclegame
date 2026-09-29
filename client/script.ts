@@ -1,10 +1,9 @@
 import {
-  Point,
-  ReferenceCircle,
-  CircleEvaluation,
-  CircleStats,
-  getCircleStatsFromPoints,
+  type CircleEvaluation,
   evaluateCircle,
+  getCircleStatsFromPoints,
+  type Point,
+  ReferenceCircle,
 } from '../shared/circle';
 
 const canvas = document.getElementById('circleCanvas') as HTMLCanvasElement;
@@ -197,7 +196,7 @@ submitBtn.addEventListener('click', async () => {
     if (!res.ok) throw new Error('Submission failed');
     const data = (await res.json()) as { gameid: string };
     window.location.href = `/game/${data.gameid}`;
-  } catch (err) {
+  } catch {
     alert('Failed to submit score. Please try again.');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit';

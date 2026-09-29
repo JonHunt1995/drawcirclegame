@@ -23,7 +23,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background-color: #0b0f19;
   color: #f8fafc;
   display: flex;
@@ -345,27 +345,27 @@ canvas {
 }
 
 .leaderboard td,
-.leaderboard th[scope='row'] {
+.leaderboard th[scope="row"] {
   padding: var(--space-2xs) var(--space-xs);
   font-size: var(--step--1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: middle;
 }
 
+.leaderboard th[scope="row"] {
+  color: #38bdf8;
+  font-weight: 700;
+  width: 1%;
+  white-space: nowrap;
+}
+
 .leaderboard tr:last-child td,
-.leaderboard tr:last-child th[scope='row'] {
+.leaderboard tr:last-child th[scope="row"] {
   border-bottom: none;
 }
 
 .leaderboard tr:hover {
   background: rgba(255, 255, 255, 0.02);
-}
-
-.leaderboard th[scope='row'] {
-  color: #38bdf8;
-  font-weight: 700;
-  width: 1%;
-  white-space: nowrap;
 }
 
 .leaderboard-score {

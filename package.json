@@ -6,8 +6,10 @@
     "build": "esbuild client/script.ts client/gameshare.ts --bundle --outdir=client/dist",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -15,10 +17,12 @@
     "hono": "^4.13.7"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@cloudflare/workers-types": "^5.20260928.1",
     "@types/better-sqlite3": "^9.6.0",
     "better-sqlite3": "^13.0.3",
     "esbuild": "^0.28.2",
-    "prettier": "^3.9.7",
+    "typescript": "^7.0.2",
     "vitest": "^5.0.1",
     "wrangler": "^4.135.0"
   }
