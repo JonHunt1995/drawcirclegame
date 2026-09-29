@@ -2,13 +2,20 @@ import type { FC } from 'hono/jsx';
 import { ReferenceCircle } from '../../../shared/circle';
 
 export type GameCardProps = {
+  percentile: number;
   playerName: string;
   refCircle: ReferenceCircle;
   score: number;
   svgPath: string;
 };
 
-export const GameCard: FC<GameCardProps> = ({ playerName, score, svgPath, refCircle }) => {
+export const GameCard: FC<GameCardProps> = ({
+  percentile,
+  playerName,
+  score,
+  svgPath,
+  refCircle,
+}) => {
   const pad = 30;
   const minX = refCircle.cx - refCircle.r - pad;
   const minY = refCircle.cy - refCircle.r - pad;
@@ -18,7 +25,7 @@ export const GameCard: FC<GameCardProps> = ({ playerName, score, svgPath, refCir
   return (
     <>
       <h1 class="game-title">
-        {playerName} scored {score.toFixed(1)}%!
+        {playerName} scored {score.toFixed(1)}%, which beats {percentile.toFixed(1)}% of all games!
       </h1>
       <div class="canvas-wrapper">
         <svg viewBox={viewBox} style={{ width: '100%', height: '100%', display: 'block' }}>

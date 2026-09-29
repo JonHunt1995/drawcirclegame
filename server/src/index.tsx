@@ -9,7 +9,7 @@ import {
 } from '../../shared/circle';
 import { OGMetadata, SSRShell } from './components/SSRShell';
 import { GameCard } from './components/GameCard';
-import type { GameData } from '../../shared/game';
+import type { GameData, RankedGameData } from '../../shared/game';
 import { LeaderBoard, Timeframe } from './components/LeaderBoard';
 import { CanvasGame } from './components/CanvasGame';
 
@@ -81,14 +81,23 @@ app.post('/api/v1/game', async (c) => {
 
 app.get('/game/:id', async (c) => {
   const id = c.req.param('id');
-  const game = await c.env.DB.prepare('SELECT * FROM games WHERE id = ?')
-    .bind(id)
-    .first<GameData>();
+  const query = `
+  WITH ranked_games AS (
+    SELECT *,
+      RANK() OVER (ORDER BY score DESC) AS rank,
+      COUNT(*) OVER () AS game_count
+    FROM games
+  )
+  SELECT * FROM ranked_games WHERE id = ?
+  `;
+  const game = await c.env.DB.prepare(query).bind(id).first<RankedGameData>();
 
   if (!game) {
     throw new HTTPException(404, { message: 'Game not found' });
   }
 
+  const percentile =
+    game.game_count > 1 ? 100 * (1 - (game.rank - 1) / (game.game_count - 1)) : 100;
   const points: Point[] = JSON.parse(game.paths);
   const svgPath = pointsToSvgPath(points);
   const refCircle: ReferenceCircle = {
@@ -97,7 +106,7 @@ app.get('/game/:id', async (c) => {
     r: game.reference_radius,
   };
   const og: OGMetadata = {
-    title: `${game.player_name} scored ${game.score.toFixed(1)}%`,
+    title: `${game.player_name} scored ${game.score.toFixed(1)}%, which beats ${percentile.toFixed(1)}% of all games`,
     description: 'Check out my drawing and see if you can beat my score!',
     type: 'website',
   };
@@ -105,6 +114,7 @@ app.get('/game/:id', async (c) => {
   return c.html(
     <SSRShell title={og.title} og={og} currentPath={`/game/${id}`}>
       <GameCard
+        percentile={percentile}
         playerName={game.player_name}
         score={game.score}
         svgPath={svgPath}

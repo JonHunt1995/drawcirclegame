@@ -8,3 +8,8 @@ export type GameData = {
   reference_radius: number;
   created_at: string;
 };
+
+export type RankedGameData = GameData & {
+  rank: number;
+  game_count: number;
+};
