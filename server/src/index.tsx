@@ -1,17 +1,17 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import {
-  Point,
-  ReferenceCircle,
-  getCircleStatsFromPoints,
   evaluateCircle,
+  getCircleStatsFromPoints,
+  type Point,
   pointsToSvgPath,
+  ReferenceCircle,
 } from '../../shared/circle';
-import { OGMetadata, SSRShell } from './components/SSRShell';
-import { GameCard } from './components/GameCard';
 import type { GameData, RankedGameData } from '../../shared/game';
-import { LeaderBoard, Timeframe } from './components/LeaderBoard';
 import { CanvasGame } from './components/CanvasGame';
+import { GameCard } from './components/GameCard';
+import { LeaderBoard, type Timeframe } from './components/LeaderBoard';
+import { type OGMetadata, SSRShell } from './components/SSRShell';
 
 type Bindings = {
   DB: D1Database;

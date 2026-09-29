@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { shareOrCopy, type ShareOptions } from '../share';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type ShareOptions, shareOrCopy } from '../share';
 
 describe('shareOrCopy', () => {
   const originalNavigator = globalThis.navigator;

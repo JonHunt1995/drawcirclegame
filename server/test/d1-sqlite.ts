@@ -1,6 +1,6 @@
-import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
+import Database from 'better-sqlite3';
 import type { GameData } from '../../shared/game';
 
 export function createTestD1(): { db: Database.Database; d1: D1Database } {
@@ -14,21 +14,21 @@ export function createTestD1(): { db: Database.Database; d1: D1Database } {
   // Wrap better-sqlite3 in Cloudflare D1Database compatible API
   const d1 = {
     prepare: (sql: string) => {
-      let boundParams: any[] = [];
+      let boundParams: unknown[] = [];
 
       const stmtObj = {
-        bind: (...params: any[]) => {
+        bind: (...params: unknown[]) => {
           boundParams = params;
           return stmtObj;
         },
-        all: async <T = any>() => {
+        all: async <T = unknown>() => {
           const stmt = db.prepare(sql);
           const results = stmt.all(...boundParams) as T[];
           return { results, success: true, meta: {} };
         },
-        first: async <T = any>(colName?: string) => {
+        first: async <T = unknown>(colName?: string) => {
           const stmt = db.prepare(sql);
-          const row = stmt.get(...boundParams) as any;
+          const row = stmt.get(...boundParams) as Record<string, unknown> | undefined;
           if (!row) return null;
           return (colName ? row[colName] : row) as T;
         },

@@ -48,7 +48,7 @@ export const getCircleStatsFromPoints = (
 ): CircleStats | null => {
   if (points.length < 3) return null;
 
-  let stats: CircleStats = {
+  const stats: CircleStats = {
     points: [points[0]],
     ref: ref,
     angle: 0,
@@ -67,10 +67,10 @@ export const getCircleStatsFromPoints = (
   let maxY = points[0].y;
 
   for (let i = 1; i < points.length; i++) {
-    let l = points[i - 1];
+    const l = points[i - 1];
     let r = points[i];
-    let currAngle = Math.atan2(r.y - ref.cy, r.x - ref.cx);
-    let delta = Math.atan2(Math.sin(currAngle - prevAngle), Math.cos(currAngle - prevAngle));
+    const currAngle = Math.atan2(r.y - ref.cy, r.x - ref.cx);
+    const delta = Math.atan2(Math.sin(currAngle - prevAngle), Math.cos(currAngle - prevAngle));
 
     if (Math.abs(stats.angle + delta) >= 2 * Math.PI) {
       r = points[0];

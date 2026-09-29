@@ -1,5 +1,5 @@
 import type { FC } from 'hono/jsx';
-import { ReferenceCircle } from '../../../shared/circle';
+import type { ReferenceCircle } from '../../../shared/circle';
 
 export type GameCardProps = {
   percentile: number;
@@ -28,7 +28,13 @@ export const GameCard: FC<GameCardProps> = ({
         {playerName} scored {score.toFixed(1)}%, which beats {percentile.toFixed(1)}% of all games!
       </h1>
       <div class="canvas-wrapper">
-        <svg viewBox={viewBox} style={{ width: '100%', height: '100%', display: 'block' }}>
+        <svg
+          viewBox={viewBox}
+          style={{ width: '100%', height: '100%', display: 'block' }}
+          role="img"
+          aria-label="Drawn circle comparison"
+        >
+          <title>Drawn circle comparison</title>
           <circle
             cx={refCircle.cx}
             cy={refCircle.cy}
@@ -50,7 +56,7 @@ export const GameCard: FC<GameCardProps> = ({
         </svg>
       </div>
       <div class="game-card-actions">
-        <button id="share-btn" class="huddle-btn">
+        <button type="button" id="share-btn" class="huddle-btn">
           Share Result
         </button>
         <a href="/" class="huddle-btn huddle-btn-secondary">
