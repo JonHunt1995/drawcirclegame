@@ -396,13 +396,6 @@ canvas {
   white-space: nowrap;
 }
 
-.leaderboard-row-link::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
 .leaderboard-row:hover .leaderboard-row-link {
   color: #38bdf8;
 }

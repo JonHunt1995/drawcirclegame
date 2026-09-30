@@ -37,7 +37,12 @@ export const LeaderBoard = ({ entries = [], timeframe = 'all' }: LeaderBoardProp
     val ? val.charAt(0).toUpperCase() + val.slice(1) : 'N/A';
 
   const rows = entries.map((entry, i) => (
-    <tr key={entry.id} class="leaderboard-row">
+    <tr
+      key={entry.id}
+      class="leaderboard-row"
+      data-href={`/game/${entry.id}`}
+      onclick="if(!event.target.closest('a'))window.location.href=this.dataset.href"
+    >
       <th scope="row">{i + 1}</th>
       <td class="leaderboard-name-cell">
         <a href={`/game/${entry.id}`} class="leaderboard-row-link" title="View Game">
