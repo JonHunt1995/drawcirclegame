@@ -6,10 +6,17 @@ import type { GameData } from '../../shared/game';
 export function createTestD1(): { db: Database.Database; d1: D1Database } {
   const db = new Database(':memory:');
 
-  // Load and apply initial schema migration
-  const migrationPath = path.resolve(__dirname, '../migrations/0001_create_games.sql');
-  const migrationSql = fs.readFileSync(migrationPath, 'utf8');
-  db.exec(migrationSql);
+  // Load and apply all schema migrations in sequence
+  const migrationsDir = path.resolve(__dirname, '../migrations');
+  const migrationFiles = fs
+    .readdirSync(migrationsDir)
+    .filter((file) => file.endsWith('.sql'))
+    .sort();
+
+  for (const file of migrationFiles) {
+    const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+    db.exec(sql);
+  }
 
   // Wrap better-sqlite3 in Cloudflare D1Database compatible API
   const d1 = {
@@ -60,12 +67,14 @@ export function insertTestGame(
   const cx = game.reference_cx ?? 150;
   const cy = game.reference_cy ?? 150;
   const r = game.reference_radius ?? 50;
+  const direction = game.direction ?? null;
+  const device = game.device ?? null;
   const createdAt = game.created_at ?? new Date().toISOString().replace('T', ' ').slice(0, 19);
 
   db.prepare(
-    `INSERT INTO games (id, player_name, paths, score, reference_cx, reference_cy, reference_radius, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, game.player_name, paths, game.score, cx, cy, r, createdAt);
+    `INSERT INTO games (id, player_name, paths, score, reference_cx, reference_cy, reference_radius, direction, device, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, game.player_name, paths, game.score, cx, cy, r, direction, device, createdAt);
 
   return {
     id,
@@ -75,6 +84,8 @@ export function insertTestGame(
     reference_cx: cx,
     reference_cy: cy,
     reference_radius: r,
+    direction,
+    device,
     created_at: createdAt,
   };
 }

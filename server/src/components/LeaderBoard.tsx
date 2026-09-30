@@ -8,8 +8,11 @@ export interface LeaderBoardProps {
 }
 
 export const LeaderBoard = ({ entries = [], timeframe = 'all' }: LeaderBoardProps) => {
-  const headerNames = ['Rank', 'Name', 'Score', 'Link'];
-  const headers = headerNames.map((header) => <th>{header}</th>);
+  const headerNames = ['Rank', 'Name', 'Score', 'Device', 'Direction'];
+  const headers = [
+    ...headerNames.map((header) => <th key={header}>{header}</th>),
+    <th key="chevron" aria-label="View Game" class="leaderboard-th-chevron" />,
+  ];
   const timeframeButtonNames: string[] = ['1D', '7D', '30D', 'All Time'];
   const namesToUrlSlug: Record<string, string> = {
     '1D': 'daily',
@@ -30,15 +33,27 @@ export const LeaderBoard = ({ entries = [], timeframe = 'all' }: LeaderBoardProp
     );
   });
 
+  const formatLabel = (val?: string | null) =>
+    val ? val.charAt(0).toUpperCase() + val.slice(1) : 'N/A';
+
   const rows = entries.map((entry, i) => (
-    <tr key={entry.id}>
+    <tr
+      key={entry.id}
+      class="leaderboard-row"
+      data-href={`/game/${entry.id}`}
+      onclick="if(!event.target.closest('a'))window.location.href=this.dataset.href"
+    >
       <th scope="row">{i + 1}</th>
-      <td>{entry.player_name}</td>
-      <td class="leaderboard-score">{entry.score.toFixed(1)}%</td>
-      <td>
-        <a href={`/game/${entry.id}`} class="huddle-btn">
-          View
+      <td class="leaderboard-name-cell">
+        <a href={`/game/${entry.id}`} class="leaderboard-row-link" title="View Game">
+          {entry.player_name}
         </a>
+      </td>
+      <td class="leaderboard-score">{entry.score.toFixed(1)}%</td>
+      <td class="leaderboard-meta">{formatLabel(entry.device)}</td>
+      <td class="leaderboard-meta">{formatLabel(entry.direction)}</td>
+      <td class="leaderboard-chevron" aria-hidden="true">
+        ›
       </td>
     </tr>
   ));
