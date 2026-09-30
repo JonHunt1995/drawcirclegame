@@ -1,10 +1,11 @@
 import {
   type CircleEvaluation,
   evaluateCircle,
-  getCircleStatsFromPoints,
+  getCircleStats,
   type Point,
   ReferenceCircle,
 } from '../shared/circle';
+import type { GameRequest } from '../shared/game';
 
 const canvas = document.getElementById('circleCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -80,9 +81,9 @@ canvas.addEventListener('pointermove', (e: PointerEvent) => {
   if (points.length >= 20) {
     const fit = ReferenceCircle.fromPoints(points);
     if (fit && fit.r < 2500 && fit.r > 15) {
-      const stats = getCircleStatsFromPoints(points, fit);
+      const stats = getCircleStats(points, fit);
       if (stats) {
-        const deg = Math.floor((stats.angle / (2 * Math.PI)) * 360);
+        const deg = Math.floor((Math.abs(stats.angle) / (2 * Math.PI)) * 360);
         hud.textContent = `${deg}° drawn (Release when ready)`;
       }
     }
@@ -108,13 +109,13 @@ canvas.addEventListener('pointerup', () => {
     return;
   }
 
-  const stats = getCircleStatsFromPoints(points, fit);
+  const stats = getCircleStats(points, fit);
   if (!stats) {
     reset('Not a recognized loop. Try again');
     return;
   }
 
-  const degrees = (stats.angle / (2 * Math.PI)) * 360;
+  const degrees = (Math.abs(stats.angle) / (2 * Math.PI)) * 360;
   const startEndDist = Math.hypot(
     points[points.length - 1].x - points[0].x,
     points[points.length - 1].y - points[0].y
@@ -188,10 +189,16 @@ submitBtn.addEventListener('click', async () => {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting...';
   try {
+    const payload: GameRequest = {
+      name: playerName,
+      points,
+      screenWidth: window.innerWidth,
+      isTouch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+    };
     const res = await fetch('/api/v1/game', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: playerName, points }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error('Submission failed');
     const data = (await res.json()) as { gameid: string };

@@ -40,18 +40,20 @@ export type CircleStats = {
   rad_std_dev: number;
   rad_cv: number;
   aspect_ratio: number;
+  direction: DrawingDirection;
 };
 
-export const getCircleStatsFromPoints = (
-  points: Point[],
-  ref: ReferenceCircle
-): CircleStats | null => {
+export type DrawingDirection = 'clockwise' | 'counterclockwise';
+export type DeviceType = 'mobile' | 'tablet' | 'desktop';
+
+export const getCircleStats = (points: Point[], ref: ReferenceCircle): CircleStats | null => {
   if (points.length < 3) return null;
 
   const stats: CircleStats = {
     points: [points[0]],
     ref: ref,
     angle: 0,
+    direction: 'clockwise',
     area: 0,
     perimeter: 0,
     rad_std_dev: 0,
@@ -93,8 +95,8 @@ export const getCircleStatsFromPoints = (
     if (Math.abs(stats.angle) >= 2 * Math.PI) break;
   }
 
+  stats.direction = stats.angle >= 0 ? 'clockwise' : 'counterclockwise';
   stats.area = Math.abs(stats.area) / 2;
-  stats.angle = Math.abs(stats.angle);
   stats.rad_std_dev = Math.sqrt(varSum / stats.points.length);
   stats.rad_cv = ref.r > 0 ? stats.rad_std_dev / ref.r : 1;
   const w = maxX - minX;
@@ -102,6 +104,8 @@ export const getCircleStatsFromPoints = (
   stats.aspect_ratio = w > 0 && h > 0 ? Math.min(w, h) / Math.max(w, h) : 0;
   return stats;
 };
+
+export const getCircleStatsFromPoints = getCircleStats;
 
 export function getCenter(points: Point[]): Point | null {
   if (points.length < 3) return null;

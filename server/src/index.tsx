@@ -2,12 +2,17 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import {
   evaluateCircle,
-  getCircleStatsFromPoints,
+  getCircleStats,
   type Point,
   pointsToSvgPath,
   ReferenceCircle,
 } from '../../shared/circle';
-import type { GameData, RankedGameData } from '../../shared/game';
+import {
+  categorizeDevice,
+  type GameData,
+  type GameRequest,
+  type RankedGameData,
+} from '../../shared/game';
 import { CanvasGame } from './components/CanvasGame';
 import { GameCard } from './components/GameCard';
 import { LeaderBoard, type Timeframe } from './components/LeaderBoard';
@@ -18,11 +23,6 @@ type Bindings = {
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
-
-type gameRequest = {
-  name?: string;
-  points: Point[];
-};
 
 app.get('/', (c) => {
   const og: OGMetadata = {
@@ -39,7 +39,7 @@ app.get('/', (c) => {
 });
 
 app.post('/api/v1/game', async (c) => {
-  const body = await c.req.json<gameRequest>();
+  const body = await c.req.json<GameRequest>();
   let playerName = 'Anonymous';
   if (body.name && body.name.trim().length > 0) {
     playerName = body.name.trim();
@@ -54,19 +54,31 @@ app.post('/api/v1/game', async (c) => {
     throw new HTTPException(400, { message: 'Points do not form a recognizable circle' });
   }
 
-  const stats = getCircleStatsFromPoints(body.points, fit);
+  const stats = getCircleStats(body.points, fit);
   if (!stats) {
     throw new HTTPException(400, { message: 'Points do not form a recognizable circle' });
   }
 
   const evaluation = evaluateCircle(stats);
   const gameId = crypto.randomUUID();
+  const device = categorizeDevice(body.screenWidth, body.isTouch);
+  const direction = stats.direction;
 
   await c.env.DB.prepare(
-    `INSERT INTO games (id, player_name, paths, score, reference_cx, reference_cy, reference_radius)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO games (id, player_name, paths, score, reference_cx, reference_cy, reference_radius, direction, device)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
-    .bind(gameId, playerName, JSON.stringify(stats.points), evaluation.score, fit.cx, fit.cy, fit.r)
+    .bind(
+      gameId,
+      playerName,
+      JSON.stringify(stats.points),
+      evaluation.score,
+      fit.cx,
+      fit.cy,
+      fit.r,
+      direction,
+      device
+    )
     .run();
 
   const payload = {
@@ -74,6 +86,8 @@ app.post('/api/v1/game', async (c) => {
     name: playerName,
     score: evaluation.score,
     reference: fit,
+    direction,
+    device,
   };
 
   return c.json(payload);
@@ -135,7 +149,7 @@ app.get('/leaderboard/:timeframe?', async (c) => {
   const param = c.req.param('timeframe') as Timeframe;
   const filterQuery = (param && timeframeQueries[param]) || '';
   const query = `
-  SELECT player_name, score, id
+  SELECT player_name, score, id, direction, device
   FROM games
   ${filterQuery}
   ORDER BY score DESC
