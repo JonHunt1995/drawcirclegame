@@ -48,6 +48,13 @@ export function createTestD1(): { db: Database.Database; d1: D1Database } {
 
       return stmtObj;
     },
+    batch: async <T = unknown>(statements: Array<{ all: () => Promise<D1Result<T>> }>) => {
+      const results = [];
+      for (const stmt of statements) {
+        results.push(await stmt.all());
+      }
+      return results;
+    },
   } as unknown as D1Database;
 
   return { db, d1 };
