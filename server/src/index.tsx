@@ -14,9 +14,11 @@ import {
   type RankedGameData,
 } from '../../shared/game';
 import { CanvasGame } from './components/CanvasGame';
+import { ComparisonChart, type ComparisonItem } from './components/ComparisonChart';
 import { GameCard } from './components/GameCard';
 import { LeaderBoard, type Timeframe } from './components/LeaderBoard';
 import { type OGMetadata, SSRShell } from './components/SSRShell';
+import { StatCard, type StatCategory } from './components/StatCard';
 
 type Bindings = {
   DB: D1Database;
@@ -169,4 +171,121 @@ app.get('/leaderboard/:timeframe?', async (c) => {
     </SSRShell>
   );
 });
+
+export type StatsAggregateRow = {
+  name: string;
+  count: number;
+  avg_score: number;
+};
+
+export type StatsResponse = {
+  device: StatsAggregateRow[];
+  direction: StatsAggregateRow[];
+};
+
+app.get('/api/v1/stats', async (c) => {
+  const [deviceBatch, directionBatch] = await c.env.DB.batch<StatsAggregateRow>([
+    c.env.DB.prepare(`
+      SELECT device AS name, COUNT(*) AS count, ROUND(AVG(score), 1) AS avg_score
+      FROM games
+      WHERE device IS NOT NULL
+      GROUP BY device
+      ORDER BY count DESC
+    `),
+    c.env.DB.prepare(`
+      SELECT direction AS name, COUNT(*) AS count, ROUND(AVG(score), 1) AS avg_score
+      FROM games
+      WHERE direction IS NOT NULL
+      GROUP BY direction
+      ORDER BY count DESC
+    `),
+  ]);
+
+  return c.json({
+    device: deviceBatch.results ?? [],
+    direction: directionBatch.results ?? [],
+  });
+});
+
+app.get('/stats', async (c) => {
+  const [deviceBatch, directionBatch] = await c.env.DB.batch<StatsAggregateRow>([
+    c.env.DB.prepare(`
+      SELECT device AS name, COUNT(*) AS count, ROUND(AVG(score), 1) AS avg_score
+      FROM games
+      WHERE device IS NOT NULL
+      GROUP BY device
+      ORDER BY count DESC
+    `),
+    c.env.DB.prepare(`
+      SELECT direction AS name, COUNT(*) AS count, ROUND(AVG(score), 1) AS avg_score
+      FROM games
+      WHERE direction IS NOT NULL
+      GROUP BY direction
+      ORDER BY count DESC
+    `),
+  ]);
+
+  const deviceRows = deviceBatch.results ?? [];
+  const directionRows = directionBatch.results ?? [];
+
+  const deviceComparisonItems: ComparisonItem[] = deviceRows.map((r) => ({
+    name: r.name,
+    value: r.avg_score,
+    count: r.count,
+  }));
+
+  const directionComparisonItems: ComparisonItem[] = directionRows.map((r) => ({
+    name: r.name,
+    value: r.avg_score,
+    count: r.count,
+  }));
+
+  const deviceColors: Record<string, string> = {
+    desktop: '#38bdf8',
+    mobile: '#34d399',
+    tablet: '#f59e0b',
+  };
+
+  const directionColors: Record<string, string> = {
+    clockwise: '#38bdf8',
+    counterclockwise: '#f43f5e',
+  };
+
+  const deviceCategories: StatCategory[] = deviceRows.map((r) => ({
+    name: r.name,
+    quantity: r.count,
+    color: deviceColors[r.name] ?? '#94a3b8',
+  }));
+
+  const directionCategories: StatCategory[] = directionRows.map((r) => ({
+    name: r.name,
+    quantity: r.count,
+    color: directionColors[r.name] ?? '#94a3b8',
+  }));
+
+  const og: OGMetadata = {
+    title: 'CircleDraw Statistics - Accuracy and Distribution',
+    description: 'Compare accuracy scores across devices and drawing directions!',
+    type: 'website',
+  };
+
+  return c.html(
+    <SSRShell title={og.title} og={og} currentPath="/stats">
+      <div class="stats-container">
+        <h1 class="game-title">Accuracy & Distribution Stats</h1>
+
+        <div class="stats-grid">
+          <ComparisonChart category="Device Accuracy" items={deviceComparisonItems} />
+          <ComparisonChart category="Stroke Direction Accuracy" items={directionComparisonItems} />
+        </div>
+
+        <div class="stats-grid">
+          <StatCard title="Device Breakdown" categories={deviceCategories} />
+          <StatCard title="Stroke Direction Breakdown" categories={directionCategories} />
+        </div>
+      </div>
+    </SSRShell>
+  );
+});
+
 export default app;

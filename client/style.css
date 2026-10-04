@@ -571,3 +571,107 @@ canvas {
   font-style: italic;
   text-align: center;
 }
+
+/* ComparisonChart Component */
+.comparison-chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-s);
+  padding: var(--space-s);
+  width: 100%;
+  max-width: 600px;
+  background-color: #131b2e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: clamp(12px, 2vw, 16px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.comparison-title {
+  margin: 0;
+  font-size: var(--step-0);
+  font-weight: 700;
+  color: #f8fafc;
+  text-align: center;
+}
+
+.comparison-chart {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: stretch;
+  gap: var(--space-xs);
+}
+
+.display-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-s) var(--space-2xs);
+  border-radius: 10px;
+  background-color: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+
+.display-block--winner {
+  border: 2px solid #34d399;
+  background-color: rgba(52, 211, 153, 0.08);
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.15);
+}
+
+.winner-badge {
+  font-size: var(--step--2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: #34d399;
+  margin-bottom: var(--space-3xs);
+}
+
+.display-name {
+  margin: 0;
+  font-size: var(--step--1);
+  color: #cbd5e1;
+  text-transform: capitalize;
+}
+
+.display-value {
+  font-size: var(--step-1);
+  font-weight: 700;
+  color: #f8fafc;
+  margin: var(--space-3xs) 0;
+}
+
+.display-count {
+  font-size: var(--step--2);
+  color: #64748b;
+}
+
+.comparison-empty {
+  color: #64748b;
+  font-size: var(--step--1);
+  padding: var(--space-s);
+}
+
+/* Stats Page Layout */
+.stats-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-m);
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-m);
+  width: 100%;
+  justify-items: center;
+}
