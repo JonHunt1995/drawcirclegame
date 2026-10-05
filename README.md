@@ -2,7 +2,7 @@
 
 A precision circle-drawing game evaluated at the edge with Cloudflare Workers and Hono.
 
-**Live Game**: [circledraw.jonhunt.dev](https://circledraw.jonhunt.dev)
+**Live Game**: [circledraw.jonhunt.dev](https://circledraw.jonhunt.dev) | **API Docs**: [circledraw.jonhunt.dev/docs](https://circledraw.jonhunt.dev/docs)
 
 Draw a circle with a mouse or touchscreen. The game fits an ideal circle to your stroke, grades your geometric precision using algebraic fitting and quadratic deviation penalties, and ranks your score on a global leaderboard.
 
@@ -193,5 +193,5 @@ Lifecycle hooks in `package.json` automate local migrations before dev (`predev`
 
 ### Endpoints
 - `POST /api/v1/game`: Submit a completed stroke for evaluation and ranking.
-- `GET /openapi.json`: OpenAPI 3.1 specification for CircleDraw APIs.
-- `GET /docs`: Interactive API documentation and explorer (powered by Scalar).
+- `GET /openapi.json`: OpenAPI 3.1 specification for CircleDraw APIs ([Live Spec](https://circledraw.jonhunt.dev/openapi.json)).
+- `GET /docs`: Interactive API documentation and explorer powered by Scalar ([Interactive Docs](https://circledraw.jonhunt.dev/docs)).
