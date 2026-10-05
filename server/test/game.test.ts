@@ -182,4 +182,111 @@ describe('POST /api/v1/game (Submission API)', () => {
     };
     expect(row.device).toBe('tablet');
   });
+
+  it('truncates player names longer than 32 characters', async () => {
+    const { db, d1 } = createTestD1();
+    const points = generateCirclePoints(true);
+    const longName = 'A'.repeat(50);
+
+    const res = await app.request(
+      '/api/v1/game',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: longName,
+          points,
+        }),
+      },
+      { DB: d1 }
+    );
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { gameid: string; name: string };
+    expect(data.name).toBe('A'.repeat(32));
+    expect(data.name.length).toBe(32);
+
+    const row = db.prepare('SELECT player_name FROM games WHERE id = ?').get(data.gameid) as {
+      player_name: string;
+    };
+    expect(row.player_name).toBe('A'.repeat(32));
+  });
+
+  it('rejects malformed payloads with 400 Bad Request', async () => {
+    const { d1 } = createTestD1();
+
+    // Invalid JSON / body
+    const emptyRes = await app.request(
+      '/api/v1/game',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: 'invalid-json',
+      },
+      { DB: d1 }
+    );
+    expect(emptyRes.status).toBe(400);
+
+    // Non-array points
+    const nonArrayRes = await app.request(
+      '/api/v1/game',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ points: 'not-an-array' }),
+      },
+      { DB: d1 }
+    );
+    expect(nonArrayRes.status).toBe(400);
+
+    // Too few points (< 20)
+    const fewPointsRes = await app.request(
+      '/api/v1/game',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ points: [{ x: 0, y: 0 }] }),
+      },
+      { DB: d1 }
+    );
+    expect(fewPointsRes.status).toBe(400);
+
+    // Points with non-numeric coordinates
+    const invalidCoordsRes = await app.request(
+      '/api/v1/game',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          points: Array(25).fill({ x: 'bad', y: null }),
+        }),
+      },
+      { DB: d1 }
+    );
+    expect(invalidCoordsRes.status).toBe(400);
+  });
+
+  it('blocks cross-origin form CSRF attacks with 403 Forbidden', async () => {
+    const { d1 } = createTestD1();
+    const points = generateCirclePoints(true);
+
+    const res = await app.request(
+      '/api/v1/game',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+          Origin: 'https://evil.com',
+          'Sec-Fetch-Site': 'cross-site',
+        },
+        body: JSON.stringify({
+          name: 'Hacker',
+          points,
+        }),
+      },
+      { DB: d1 }
+    );
+
+    expect(res.status).toBe(403);
+  });
 });

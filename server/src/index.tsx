@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { csrf } from 'hono/csrf';
 import { HTTPException } from 'hono/http-exception';
 import {
   evaluateCircle,
@@ -19,12 +20,15 @@ import { GameCard } from './components/GameCard';
 import { LeaderBoard, type Timeframe } from './components/LeaderBoard';
 import { type OGMetadata, SSRShell } from './components/SSRShell';
 import { StatCard, type StatCategory } from './components/StatCard';
+import { openApiDoc } from './openapi';
 
 type Bindings = {
   DB: D1Database;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+app.use(csrf());
 
 app.get('/', (c) => {
   const og: OGMetadata = {
@@ -41,14 +45,36 @@ app.get('/', (c) => {
 });
 
 app.post('/api/v1/game', async (c) => {
-  const body = await c.req.json<GameRequest>();
-  let playerName = 'Anonymous';
-  if (body.name && body.name.trim().length > 0) {
-    playerName = body.name.trim();
+  let body: GameRequest;
+  try {
+    body = await c.req.json<GameRequest>();
+  } catch {
+    throw new HTTPException(400, { message: 'Invalid JSON payload' });
   }
 
-  if (!body.points || body.points.length < 20) {
+  if (!body || typeof body !== 'object') {
+    throw new HTTPException(400, { message: 'Invalid request payload' });
+  }
+
+  let playerName = 'Anonymous';
+  if (typeof body.name === 'string' && body.name.trim().length > 0) {
+    playerName = body.name.trim().slice(0, 32);
+  }
+
+  if (!Array.isArray(body.points) || body.points.length < 20) {
     throw new HTTPException(400, { message: 'Valid circle path points are required' });
+  }
+
+  const hasInvalidPoints = body.points.some(
+    (p) =>
+      !p ||
+      typeof p.x !== 'number' ||
+      !Number.isFinite(p.x) ||
+      typeof p.y !== 'number' ||
+      !Number.isFinite(p.y)
+  );
+  if (hasInvalidPoints) {
+    throw new HTTPException(400, { message: 'Points must contain valid numeric coordinates' });
   }
 
   const fit = ReferenceCircle.fromPoints(body.points);
@@ -178,35 +204,6 @@ export type StatsAggregateRow = {
   avg_score: number;
 };
 
-export type StatsResponse = {
-  device: StatsAggregateRow[];
-  direction: StatsAggregateRow[];
-};
-
-app.get('/api/v1/stats', async (c) => {
-  const [deviceBatch, directionBatch] = await c.env.DB.batch<StatsAggregateRow>([
-    c.env.DB.prepare(`
-      SELECT device AS name, COUNT(*) AS count, ROUND(AVG(score), 1) AS avg_score
-      FROM games
-      WHERE device IS NOT NULL
-      GROUP BY device
-      ORDER BY count DESC
-    `),
-    c.env.DB.prepare(`
-      SELECT direction AS name, COUNT(*) AS count, ROUND(AVG(score), 1) AS avg_score
-      FROM games
-      WHERE direction IS NOT NULL
-      GROUP BY direction
-      ORDER BY count DESC
-    `),
-  ]);
-
-  return c.json({
-    device: deviceBatch.results ?? [],
-    direction: directionBatch.results ?? [],
-  });
-});
-
 app.get('/stats', async (c) => {
   const [deviceBatch, directionBatch] = await c.env.DB.batch<StatsAggregateRow>([
     c.env.DB.prepare(`
@@ -286,6 +283,24 @@ app.get('/stats', async (c) => {
       </div>
     </SSRShell>
   );
+});
+
+app.get('/openapi.json', (c) => {
+  return c.json(openApiDoc);
+});
+
+app.get('/docs', (c) => {
+  return c.html(`<!doctype html>
+<html>
+  <head>
+    <title>CircleDraw API Reference</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script id="api-reference" data-url="/openapi.json" src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
+</html>`);
 });
 
 export default app;

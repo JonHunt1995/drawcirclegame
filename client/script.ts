@@ -185,7 +185,8 @@ function redraw() {
 
 submitBtn.addEventListener('click', async () => {
   if (points.length === 0) return;
-  const playerName = prompt('Enter your name (optional):', 'Anonymous') || 'Anonymous';
+  const rawName = prompt('Enter your name (optional):', 'Anonymous') || 'Anonymous';
+  const playerName = rawName.trim().slice(0, 32) || 'Anonymous';
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting...';
   try {
