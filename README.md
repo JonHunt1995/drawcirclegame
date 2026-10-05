@@ -193,4 +193,5 @@ Lifecycle hooks in `package.json` automate local migrations before dev (`predev`
 
 ### Endpoints
 - `POST /api/v1/game`: Submit a completed stroke for evaluation and ranking.
-- `GET /api/v1/stats`: Batched aggregate statistics for devices and stroke directions.
+- `GET /openapi.json`: OpenAPI 3.1 specification for CircleDraw APIs.
+- `GET /docs`: Interactive API documentation and explorer (powered by Scalar).

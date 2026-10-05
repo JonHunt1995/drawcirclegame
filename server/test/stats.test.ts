@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ComparisonChart, type ComparisonItem } from '../src/components/ComparisonChart';
-import app, { type StatsResponse } from '../src/index';
+import app from '../src/index';
 import { createTestD1, insertTestGame } from './d1-sqlite';
 
 describe('ComparisonChart component', () => {
@@ -57,61 +57,6 @@ describe('ComparisonChart component', () => {
       items: [{ name: 'mobile', value: 0 }],
     });
     expect(String(zeroItems)).toContain('No comparison data available yet');
-  });
-});
-
-describe('GET /api/v1/stats', () => {
-  it('returns empty arrays when no games exist', async () => {
-    const { d1 } = createTestD1();
-
-    const res = await app.request('/api/v1/stats', { method: 'GET' }, { DB: d1 });
-    expect(res.status).toBe(200);
-
-    const json = (await res.json()) as { device: unknown[]; direction: unknown[] };
-    expect(json.device).toEqual([]);
-    expect(json.direction).toEqual([]);
-  });
-
-  it('aggregates device and direction volume and average score', async () => {
-    const { db, d1 } = createTestD1();
-
-    insertTestGame(db, { player_name: 'P1', score: 90, device: 'desktop', direction: 'clockwise' });
-    insertTestGame(db, { player_name: 'P2', score: 80, device: 'desktop', direction: 'clockwise' });
-    insertTestGame(db, {
-      player_name: 'P3',
-      score: 70,
-      device: 'mobile',
-      direction: 'counterclockwise',
-    });
-
-    const res = await app.request('/api/v1/stats', { method: 'GET' }, { DB: d1 });
-    expect(res.status).toBe(200);
-
-    const json = (await res.json()) as StatsResponse;
-
-    // Desktop: count 2, avg 85.0
-    const desktop = json.device.find((d) => d.name === 'desktop');
-    expect(desktop).toBeDefined();
-    expect(desktop?.count).toBe(2);
-    expect(desktop?.avg_score).toBe(85.0);
-
-    // Mobile: count 1, avg 70.0
-    const mobile = json.device.find((d) => d.name === 'mobile');
-    expect(mobile).toBeDefined();
-    expect(mobile?.count).toBe(1);
-    expect(mobile?.avg_score).toBe(70.0);
-
-    // Clockwise: count 2, avg 85.0
-    const clockwise = json.direction.find((d) => d.name === 'clockwise');
-    expect(clockwise).toBeDefined();
-    expect(clockwise?.count).toBe(2);
-    expect(clockwise?.avg_score).toBe(85.0);
-
-    // Counterclockwise: count 1, avg 70.0
-    const counterclockwise = json.direction.find((d) => d.name === 'counterclockwise');
-    expect(counterclockwise).toBeDefined();
-    expect(counterclockwise?.count).toBe(1);
-    expect(counterclockwise?.avg_score).toBe(70.0);
   });
 });
 

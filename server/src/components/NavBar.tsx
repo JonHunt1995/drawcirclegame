@@ -18,6 +18,9 @@ export function NavBar({ currentPath }: NavBarProps) {
         <a href="/stats" class={`nav-link ${currentPath === '/stats' ? 'active' : ''}`}>
           Stats
         </a>
+        <a href="/docs" class={`nav-link ${currentPath === '/docs' ? 'active' : ''}`}>
+          Docs
+        </a>
       </div>
     </nav>
   );
