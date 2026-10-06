@@ -77,6 +77,26 @@ app.post('/api/v1/game', async (c) => {
     throw new HTTPException(400, { message: 'Points must contain valid numeric coordinates' });
   }
 
+  const hasNonIntegers = body.points.some((p) => !Number.isInteger(p.x) || !Number.isInteger(p.y));
+  if (hasNonIntegers) {
+    throw new HTTPException(400, { message: 'Points must contain integer screen coordinates' });
+  }
+
+  let minDelta = Number.POSITIVE_INFINITY;
+  let maxDelta = Number.NEGATIVE_INFINITY;
+  for (let i = 1; i < body.points.length; i++) {
+    const dist = Math.hypot(
+      body.points[i].x - body.points[i - 1].x,
+      body.points[i].y - body.points[i - 1].y
+    );
+    if (dist < minDelta) minDelta = dist;
+    if (dist > maxDelta) maxDelta = dist;
+  }
+
+  if (maxDelta - minDelta < 0.05) {
+    throw new HTTPException(400, { message: 'Inhuman uniform stroke spacing detected' });
+  }
+
   const fit = ReferenceCircle.fromPoints(body.points);
   if (!fit) {
     throw new HTTPException(400, { message: 'Points do not form a recognizable circle' });
