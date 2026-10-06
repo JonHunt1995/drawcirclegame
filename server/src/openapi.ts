@@ -43,8 +43,14 @@ export const openApiDoc = {
                     items: {
                       type: 'object',
                       properties: {
-                        x: { type: 'number', description: 'X coordinate in pixels' },
-                        y: { type: 'number', description: 'Y coordinate in pixels' },
+                        x: {
+                          type: 'integer',
+                          description: 'Integer X screen coordinate in pixels',
+                        },
+                        y: {
+                          type: 'integer',
+                          description: 'Integer Y screen coordinate in pixels',
+                        },
                       },
                       required: ['x', 'y'],
                     },
@@ -106,7 +112,8 @@ export const openApiDoc = {
             },
           },
           '400': {
-            description: 'Malformed input or points do not form a recognizable circle',
+            description:
+              'Malformed input, non-integer coordinates, uniform synthetic spacing, or points do not form a recognizable circle',
             content: {
               'application/json': {
                 schema: {

@@ -289,4 +289,57 @@ describe('POST /api/v1/game (Submission API)', () => {
 
     expect(res.status).toBe(403);
   });
+
+  it('rejects floating-point non-integer coordinates with 400 Bad Request', async () => {
+    const { d1 } = createTestD1();
+    const points = generateCirclePoints(true).map((p, idx) =>
+      idx === 5 ? { x: p.x + 0.5, y: p.y } : p
+    );
+
+    const res = await app.request(
+      '/api/v1/game',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'FloatCheater',
+          points,
+        }),
+      },
+      { DB: d1 }
+    );
+
+    expect(res.status).toBe(400);
+    const text = await res.text();
+    expect(text).toContain('Points must contain integer screen coordinates');
+  });
+
+  it('rejects mathematically uniform synthetic step spacing with 400 Bad Request', async () => {
+    const { d1 } = createTestD1();
+    // Points with identical step spacing (every step delta is exactly 10.00)
+    const points: { x: number; y: number }[] = [];
+    for (let i = 0; i <= 36; i++) {
+      points.push({
+        x: i * 10,
+        y: 100,
+      });
+    }
+
+    const res = await app.request(
+      '/api/v1/game',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'BotCheater',
+          points,
+        }),
+      },
+      { DB: d1 }
+    );
+
+    expect(res.status).toBe(400);
+    const text = await res.text();
+    expect(text).toContain('Inhuman uniform stroke spacing detected');
+  });
 });
