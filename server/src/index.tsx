@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { csrf } from 'hono/csrf';
 import { HTTPException } from 'hono/http-exception';
+import { requestId } from 'hono/request-id';
+import { endTime, startTime, timing } from 'hono/timing';
 import {
   evaluateCircle,
   getCircleStats,
@@ -24,11 +26,102 @@ import { openApiDoc } from './openapi';
 
 type Bindings = {
   DB: D1Database;
+  ENVIRONMENT?: string;
 };
 
-const app = new Hono<{ Bindings: Bindings }>();
+type Variables = {
+  requestId: string;
+};
+
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+
+app.use('*', requestId());
+app.use('*', timing());
+app.use('*', async (c, next) => {
+  const start = performance.now();
+  await next();
+  const durationMs = Math.round(performance.now() - start);
+  const reqId = c.get('requestId');
+  const method = c.req.method;
+  const path = c.req.path;
+  const status = c.res.status;
+
+  if (c.env?.ENVIRONMENT === 'production' || process.env.NODE_ENV === 'production') {
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: status >= 500 ? 'error' : status >= 400 ? 'warn' : 'info',
+        requestId: reqId,
+        method,
+        path,
+        status,
+        durationMs,
+      })
+    );
+  } else if (process.env.NODE_ENV !== 'test') {
+    console.log(`[${reqId}] ${method} ${path} ${status} - ${durationMs}ms`);
+  }
+});
 
 app.use(csrf());
+
+app.onError((err, c) => {
+  const reqId = c.get('requestId') || 'unknown';
+  const isHttpException = err instanceof HTTPException;
+  const status = isHttpException ? err.status : 500;
+  const message = isHttpException ? err.message : 'Internal Server Error';
+
+  if (c.env?.ENVIRONMENT === 'production' || process.env.NODE_ENV === 'production') {
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        timestamp: new Date().toISOString(),
+        requestId: reqId,
+        status,
+        method: c.req.method,
+        path: c.req.path,
+        error: err.message,
+        stack: err.stack,
+      })
+    );
+  } else if (process.env.NODE_ENV !== 'test') {
+    console.error(`[${reqId}] ERROR ${c.req.method} ${c.req.path} ${status} - ${err.message}`);
+    if (err.stack) {
+      console.error(err.stack);
+    }
+  }
+
+  if (c.req.path.startsWith('/api/') || c.req.header('accept')?.includes('application/json')) {
+    return c.json(
+      {
+        error: message,
+        requestId: reqId,
+      },
+      status
+    );
+  }
+
+  return c.html(
+    <SSRShell title={`${status} - CircleDraw`} currentPath={c.req.path}>
+      <main
+        class="game-container"
+        style="text-align: center; padding: var(--space-xl) var(--space-m);"
+      >
+        <h1 class="game-title">{status === 404 ? 'Page Not Found' : 'Something Went Wrong'}</h1>
+        <p style="color: var(--color-text-muted); margin: var(--space-m) 0;">{message}</p>
+        {reqId !== 'unknown' && (
+          <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: var(--space-l);">
+            Request ID: <code>{reqId}</code>
+          </p>
+        )}
+        <a href="/" class="huddle-btn" style="text-decoration: none; display: inline-block;">
+          Back to Game
+        </a>
+      </main>
+    </SSRShell>,
+    status
+  );
+});
 
 app.get('/', (c) => {
   const og: OGMetadata = {
@@ -97,21 +190,27 @@ app.post('/api/v1/game', async (c) => {
     throw new HTTPException(400, { message: 'Inhuman uniform stroke spacing detected' });
   }
 
+  startTime(c, 'geo', 'Circle Geometry');
   const fit = ReferenceCircle.fromPoints(body.points);
   if (!fit) {
+    endTime(c, 'geo');
     throw new HTTPException(400, { message: 'Points do not form a recognizable circle' });
   }
 
   const stats = getCircleStats(body.points, fit);
   if (!stats) {
+    endTime(c, 'geo');
     throw new HTTPException(400, { message: 'Points do not form a recognizable circle' });
   }
 
   const evaluation = evaluateCircle(stats);
+  endTime(c, 'geo');
+
   const gameId = crypto.randomUUID();
   const device = categorizeDevice(body.screenWidth, body.isTouch);
   const direction = stats.direction;
 
+  startTime(c, 'db', 'D1 Insert');
   await c.env.DB.prepare(
     `INSERT INTO games (id, player_name, paths, score, reference_cx, reference_cy, reference_radius, direction, device)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -128,6 +227,7 @@ app.post('/api/v1/game', async (c) => {
       device
     )
     .run();
+  endTime(c, 'db');
 
   const payload = {
     gameid: gameId,
@@ -152,7 +252,9 @@ app.get('/game/:id', async (c) => {
   )
   SELECT * FROM ranked_games WHERE id = ?
   `;
+  startTime(c, 'db', 'D1 Query');
   const game = await c.env.DB.prepare(query).bind(id).first<RankedGameData>();
+  endTime(c, 'db');
 
   if (!game) {
     throw new HTTPException(404, { message: 'Game not found' });
@@ -203,7 +305,9 @@ app.get('/leaderboard/:timeframe?', async (c) => {
   ORDER BY score DESC
   LIMIT 25
   `;
+  startTime(c, 'db', 'D1 Query');
   const { results } = await c.env.DB.prepare(query).bind().all<GameData>();
+  endTime(c, 'db');
 
   const og: OGMetadata = {
     title: 'Leaderboard - Top 25 Circles',
@@ -225,6 +329,7 @@ export type StatsAggregateRow = {
 };
 
 app.get('/stats', async (c) => {
+  startTime(c, 'db', 'D1 Batch Query');
   const [deviceBatch, directionBatch] = await c.env.DB.batch<StatsAggregateRow>([
     c.env.DB.prepare(`
       SELECT device AS name, COUNT(*) AS count, ROUND(AVG(score), 1) AS avg_score
@@ -241,6 +346,7 @@ app.get('/stats', async (c) => {
       ORDER BY count DESC
     `),
   ]);
+  endTime(c, 'db');
 
   const deviceRows = deviceBatch.results ?? [];
   const directionRows = directionBatch.results ?? [];
