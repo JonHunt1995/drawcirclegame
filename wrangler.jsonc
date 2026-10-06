@@ -19,5 +19,15 @@
       "preview_database_id": "371f5e9a-d605-4306-a1d3-96180f59c80e",
       "migrations_dir": "server/migrations"
     }
-  ]
+  ],
+  "previews": {
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "drawcircle-db-preview",
+        "database_id": "371f5e9a-d605-4306-a1d3-96180f59c80e",
+        "migrations_dir": "server/migrations"
+      }
+    ]
+  }
 }
