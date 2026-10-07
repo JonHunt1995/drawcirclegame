@@ -296,6 +296,15 @@ canvas {
   width: 100%;
 }
 
+.huddle-actions.hidden {
+  display: none;
+}
+
+#huddle-post-submit .huddle-btn {
+  flex: 1;
+  text-align: center;
+}
+
 .huddle-input {
   flex: 1;
   min-width: 0;
@@ -334,6 +343,15 @@ canvas {
   .huddle-stats {
     gap: var(--space-2xs);
     padding-left: var(--space-2xs);
+  }
+
+  #huddle-post-submit {
+    flex-wrap: wrap;
+  }
+
+  #huddle-post-submit #share-btn {
+    width: 100%;
+    flex: auto;
   }
 }
 

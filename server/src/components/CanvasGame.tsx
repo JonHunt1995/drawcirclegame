@@ -42,7 +42,7 @@ export function CanvasGame() {
             </div>
           </div>
 
-          <div class="huddle-actions">
+          <div id="huddle-pre-submit" class="huddle-actions">
             <input
               type="text"
               id="player-name-input"
@@ -57,6 +57,24 @@ export function CanvasGame() {
             </button>
             <button type="button" id="reset-btn" class="huddle-btn huddle-btn-secondary">
               Reset
+            </button>
+          </div>
+
+          <div id="huddle-post-submit" class="huddle-actions hidden">
+            <button type="button" id="share-btn" class="huddle-btn">
+              Share Result
+            </button>
+            <a
+              id="view-game-link"
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="huddle-btn huddle-btn-secondary"
+            >
+              View Game
+            </a>
+            <button type="button" id="draw-again-btn" class="huddle-btn huddle-btn-secondary">
+              Draw Again
             </button>
           </div>
         </div>

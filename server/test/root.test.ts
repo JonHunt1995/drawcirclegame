@@ -18,6 +18,9 @@ describe('GET / (SSR Root & Navigation)', () => {
     expect(html).toContain('progress-hud');
     expect(html).toContain('huddle-card');
     expect(html).toContain('player-name-input');
+    expect(html).toContain('share-btn');
+    expect(html).toContain('view-game-link');
+    expect(html).toContain('draw-again-btn');
     expect(html).toContain('/dist/script.js');
 
     // Navigation bar
