@@ -6,6 +6,7 @@ import {
   ReferenceCircle,
 } from '../shared/circle';
 import type { GameRequest } from '../shared/game';
+import { shareOrCopy } from './share';
 
 const canvas = document.getElementById('circleCanvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -19,9 +20,18 @@ const statVariance = document.getElementById('stat-variance')!;
 const statIso = document.getElementById('stat-iso')!;
 const resetBtn = document.getElementById('reset-btn') as HTMLButtonElement;
 const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+const playerNameInput = document.getElementById('player-name-input') as HTMLInputElement | null;
+const preSubmitActions = document.getElementById('huddle-pre-submit');
+const postSubmitActions = document.getElementById('huddle-post-submit');
+const shareBtn = document.getElementById('share-btn') as HTMLButtonElement | null;
+const viewGameLink = document.getElementById('view-game-link') as HTMLAnchorElement | null;
+const drawAgainBtn = document.getElementById('draw-again-btn') as HTMLButtonElement | null;
 
+let currentPlayerName = 'Anonymous';
 let points: Point[] = [];
 let ghostCircle: ReferenceCircle | null = null;
+let lastScore = 0;
+let submittedGameId: string | null = null;
 
 function setupCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -40,8 +50,11 @@ setupCanvas();
 function reset(hint: string = hudText) {
   points = [];
   ghostCircle = null;
+  submittedGameId = null;
   hud.textContent = hint;
   huddleCard.classList.add('hidden');
+  preSubmitActions?.classList.remove('hidden');
+  postSubmitActions?.classList.add('hidden');
   submitBtn.disabled = false;
   submitBtn.textContent = 'Submit';
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -137,12 +150,36 @@ canvas.addEventListener('pointerup', () => {
 });
 
 function displayHuddleCard(evalResult: CircleEvaluation) {
+  lastScore = evalResult.score;
   scoreVal.textContent = evalResult.score.toFixed(1);
   statAspect.textContent = evalResult.aspect.toFixed(2);
   statVariance.textContent = `${(evalResult.cvR * 100).toFixed(1)}%`;
   statIso.textContent = evalResult.iso.toFixed(2);
 
+  if (playerNameInput) {
+    playerNameInput.value = currentPlayerName !== 'Anonymous' ? currentPlayerName : '';
+  }
+
+  preSubmitActions?.classList.remove('hidden');
+  postSubmitActions?.classList.add('hidden');
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Submit';
+
   huddleCard.classList.remove('hidden');
+}
+
+if (playerNameInput) {
+  playerNameInput.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitBtn.click();
+    }
+  });
+
+  playerNameInput.addEventListener('input', () => {
+    const val = playerNameInput.value.trim().slice(0, 32);
+    currentPlayerName = val || 'Anonymous';
+  });
 }
 
 function redraw() {
@@ -185,10 +222,14 @@ function redraw() {
 
 submitBtn.addEventListener('click', async () => {
   if (points.length === 0) return;
-  const rawName = prompt('Enter your name (optional):', 'Anonymous') || 'Anonymous';
-  const playerName = rawName.trim().slice(0, 32) || 'Anonymous';
+  const inputVal = playerNameInput ? playerNameInput.value.trim().slice(0, 32) : '';
+  const playerName =
+    inputVal || (currentPlayerName !== 'Anonymous' ? currentPlayerName : '') || 'Anonymous';
+  currentPlayerName = playerName;
+
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting...';
+  hud.textContent = 'Submitting score...';
   try {
     const payload: GameRequest = {
       name: playerName,
@@ -203,12 +244,38 @@ submitBtn.addEventListener('click', async () => {
     });
     if (!res.ok) throw new Error('Submission failed');
     const data = (await res.json()) as { gameid: string };
-    window.location.href = `/game/${data.gameid}`;
+    submittedGameId = data.gameid;
+
+    hud.textContent = 'Score saved! Ready to share';
+    if (viewGameLink) {
+      viewGameLink.href = `/game/${data.gameid}`;
+    }
+    preSubmitActions?.classList.add('hidden');
+    postSubmitActions?.classList.remove('hidden');
   } catch {
-    alert('Failed to submit score. Please try again.');
+    hud.textContent = 'Submission failed. Please try again';
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit';
   }
 });
 
 resetBtn.addEventListener('click', () => reset());
+
+if (shareBtn) {
+  shareBtn.addEventListener('click', async () => {
+    if (!submittedGameId) return;
+    const shareUrl = `${window.location.origin}/game/${submittedGameId}`;
+    await shareOrCopy(
+      {
+        title: 'Circle Drawing Game',
+        text: `I drew a circle with ${lastScore.toFixed(1)}% accuracy! Can you beat my score?`,
+        url: shareUrl,
+      },
+      shareBtn
+    );
+  });
+}
+
+if (drawAgainBtn) {
+  drawAgainBtn.addEventListener('click', () => reset());
+}

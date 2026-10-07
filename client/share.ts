@@ -13,7 +13,7 @@ export async function shareOrCopy(
   // if it ain't fucking firefox...
   if (typeof navigator.share === 'function') {
     try {
-      await navigator.share(options);
+      await navigator.share({ url: options.url });
       return 'shared';
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') {

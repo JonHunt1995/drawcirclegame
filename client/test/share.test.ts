@@ -40,7 +40,7 @@ describe('shareOrCopy', () => {
     const result = await shareOrCopy(testOptions);
 
     expect(result).toBe('shared');
-    expect(shareMock).toHaveBeenCalledWith(testOptions);
+    expect(shareMock).toHaveBeenCalledWith({ url: testOptions.url });
     expect(clipboardMock).not.toHaveBeenCalled();
   });
 
@@ -66,7 +66,7 @@ describe('shareOrCopy', () => {
     const result = await shareOrCopy(testOptions, mockBtn);
 
     expect(result).toBe('aborted');
-    expect(shareMock).toHaveBeenCalledWith(testOptions);
+    expect(shareMock).toHaveBeenCalledWith({ url: testOptions.url });
     expect(clipboardMock).not.toHaveBeenCalled();
     expect(mockBtn.textContent).toBe('Share Result');
     expect(mockBtn.classList.add).not.toHaveBeenCalled();
