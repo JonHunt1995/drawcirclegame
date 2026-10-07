@@ -3,6 +3,31 @@ export type Point = {
   y: number;
 };
 
+export type CircleMoments = {
+  sumUSquared: number;
+  sumVSquared: number;
+  sumUV: number;
+  sumUZ: number;
+  sumVZ: number;
+};
+
+export function computeCircleMoments(points: Point[], meanX: number, meanY: number): CircleMoments {
+  return points.reduce<CircleMoments>(
+    (acc, p) => {
+      const u = p.x - meanX;
+      const v = p.y - meanY;
+      const z = u * u + v * v;
+      acc.sumUSquared += u * u;
+      acc.sumVSquared += v * v;
+      acc.sumUV += u * v;
+      acc.sumUZ += u * z;
+      acc.sumVZ += v * z;
+      return acc;
+    },
+    { sumUSquared: 0, sumVSquared: 0, sumUV: 0, sumUZ: 0, sumVZ: 0 }
+  );
+}
+
 export class ReferenceCircle {
   constructor(
     public cx: number,
@@ -11,16 +36,32 @@ export class ReferenceCircle {
   ) {}
 
   static fromPoints(points: Point[]): ReferenceCircle | null {
-    const center = getCenter(points);
-    if (!center) return null;
+    const n = points.length;
+    if (n < 3) return null;
 
-    const sumDistSq = points.reduce(
-      (acc, p) => acc + (p.x - center.x) ** 2 + (p.y - center.y) ** 2,
-      0
+    const ptsSum = points.reduce(
+      (acc, pt) => {
+        acc.x += pt.x;
+        acc.y += pt.y;
+        return acc;
+      },
+      { x: 0, y: 0 }
     );
-    const r = Math.sqrt(sumDistSq / points.length);
+    const meanX = ptsSum.x / n;
+    const meanY = ptsSum.y / n;
 
-    return new ReferenceCircle(center.x, center.y, r);
+    const moments = computeCircleMoments(points, meanX, meanY);
+
+    const det = moments.sumUSquared * moments.sumVSquared - moments.sumUV * moments.sumUV;
+    if (Math.abs(det) < 1e-5) return null;
+
+    const uc = (0.5 * (moments.sumUZ * moments.sumVSquared - moments.sumVZ * moments.sumUV)) / det;
+    const vc = (0.5 * (moments.sumVZ * moments.sumUSquared - moments.sumUZ * moments.sumUV)) / det;
+
+    const rSq = uc * uc + vc * vc + (moments.sumUSquared + moments.sumVSquared) / n;
+    if (rSq <= 0) return null;
+
+    return new ReferenceCircle(meanX + uc, meanY + vc, Math.sqrt(rSq));
   }
 }
 
@@ -106,55 +147,6 @@ export const getCircleStats = (points: Point[], ref: ReferenceCircle): CircleSta
 };
 
 export const getCircleStatsFromPoints = getCircleStats;
-
-export function getCenter(points: Point[]): Point | null {
-  if (points.length < 3) return null;
-
-  const ptsSum = points.reduce(
-    (acc, pt) => {
-      acc.x += pt.x;
-      acc.y += pt.y;
-      return acc;
-    },
-    { x: 0, y: 0 }
-  );
-
-  const meanX = ptsSum.x / points.length;
-  const meanY = ptsSum.y / points.length;
-
-  let Suu = 0;
-  let Svv = 0;
-  let Suv = 0;
-  let Suuu = 0;
-  let Svvv = 0;
-  let Suvv = 0;
-  let Svuu = 0;
-
-  for (let i = 0; i < points.length; i++) {
-    const u = points[i].x - meanX;
-    const v = points[i].y - meanY;
-    const u2 = u * u;
-    const v2 = v * v;
-    Suu += u2;
-    Svv += v2;
-    Suv += u * v;
-    Suuu += u2 * u;
-    Svvv += v2 * v;
-    Suvv += u * v2;
-    Svuu += v * u2;
-  }
-
-  const det = Suu * Svv - Suv * Suv;
-  if (Math.abs(det) < 1e-5) return null;
-
-  const uc = (0.5 * ((Suuu + Suvv) * Svv - (Svvv + Svuu) * Suv)) / det;
-  const vc = (0.5 * ((Svvv + Svuu) * Suu - (Suuu + Suvv) * Suv)) / det;
-
-  return {
-    x: uc + meanX,
-    y: vc + meanY,
-  };
-}
 
 export function evaluateCircle(stats: CircleStats): CircleEvaluation {
   // 1. Isoperimetric Quotient
