@@ -19,7 +19,9 @@ const statVariance = document.getElementById('stat-variance')!;
 const statIso = document.getElementById('stat-iso')!;
 const resetBtn = document.getElementById('reset-btn') as HTMLButtonElement;
 const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+const playerNameInput = document.getElementById('player-name-input') as HTMLInputElement | null;
 
+let currentPlayerName = 'Anonymous';
 let points: Point[] = [];
 let ghostCircle: ReferenceCircle | null = null;
 
@@ -142,7 +144,25 @@ function displayHuddleCard(evalResult: CircleEvaluation) {
   statVariance.textContent = `${(evalResult.cvR * 100).toFixed(1)}%`;
   statIso.textContent = evalResult.iso.toFixed(2);
 
+  if (playerNameInput) {
+    playerNameInput.value = currentPlayerName !== 'Anonymous' ? currentPlayerName : '';
+  }
+
   huddleCard.classList.remove('hidden');
+}
+
+if (playerNameInput) {
+  playerNameInput.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitBtn.click();
+    }
+  });
+
+  playerNameInput.addEventListener('input', () => {
+    const val = playerNameInput.value.trim().slice(0, 32);
+    currentPlayerName = val || 'Anonymous';
+  });
 }
 
 function redraw() {
@@ -185,10 +205,14 @@ function redraw() {
 
 submitBtn.addEventListener('click', async () => {
   if (points.length === 0) return;
-  const rawName = prompt('Enter your name (optional):', 'Anonymous') || 'Anonymous';
-  const playerName = rawName.trim().slice(0, 32) || 'Anonymous';
+  const inputVal = playerNameInput ? playerNameInput.value.trim().slice(0, 32) : '';
+  const playerName =
+    inputVal || (currentPlayerName !== 'Anonymous' ? currentPlayerName : '') || 'Anonymous';
+  currentPlayerName = playerName;
+
   submitBtn.disabled = true;
   submitBtn.textContent = 'Submitting...';
+  hud.textContent = 'Submitting score...';
   try {
     const payload: GameRequest = {
       name: playerName,
@@ -205,7 +229,7 @@ submitBtn.addEventListener('click', async () => {
     const data = (await res.json()) as { gameid: string };
     window.location.href = `/game/${data.gameid}`;
   } catch {
-    alert('Failed to submit score. Please try again.');
+    hud.textContent = 'Submission failed. Please try again';
     submitBtn.disabled = false;
     submitBtn.textContent = 'Submit';
   }

@@ -12,35 +12,46 @@ export function CanvasGame() {
 
         {/* Top Huddle Result Card (Non-blocking) */}
         <div id="huddle-card" class="huddle-card hidden">
-          <div class="huddle-left">
-            <div class="score-badge">
-              <span id="score-val">0.0</span>
-              <span class="pct">%</span>
+          <div class="huddle-header">
+            <div class="huddle-left">
+              <div class="score-badge">
+                <span id="score-val">0.0</span>
+                <span class="pct">%</span>
+              </div>
             </div>
-          </div>
 
-          <div class="huddle-stats">
-            <div class="stat-item">
-              <span class="stat-label">Aspect</span>
-              <span id="stat-aspect" class="stat-val">
-                1.00
-              </span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Radius Dev</span>
-              <span id="stat-variance" class="stat-val">
-                0.0%
-              </span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">Isoperimetric</span>
-              <span id="stat-iso" class="stat-val">
-                0.00
-              </span>
+            <div class="huddle-stats">
+              <div class="stat-item">
+                <span class="stat-label">Aspect</span>
+                <span id="stat-aspect" class="stat-val">
+                  1.00
+                </span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Radius Dev</span>
+                <span id="stat-variance" class="stat-val">
+                  0.0%
+                </span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Isoperimetric</span>
+                <span id="stat-iso" class="stat-val">
+                  0.00
+                </span>
+              </div>
             </div>
           </div>
 
           <div class="huddle-actions">
+            <input
+              type="text"
+              id="player-name-input"
+              class="huddle-input"
+              placeholder="Your name"
+              maxlength={32}
+              autocomplete="off"
+              aria-label="Player Name"
+            />
             <button type="button" id="submit-btn" class="huddle-btn">
               Submit
             </button>
